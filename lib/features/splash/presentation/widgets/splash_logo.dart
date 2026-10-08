@@ -12,8 +12,6 @@ class SplashLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return FadeTransition(
       opacity: fadeAnimation,
       child: ScaleTransition(
@@ -21,48 +19,49 @@ class SplashLogo extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: 110,
-              height: 110,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF2563EB), Color(0xFF06B6D4)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF06B6D4).withValues(alpha: 0.35),
-                    blurRadius: 32,
-                    spreadRadius: 4,
-                    offset: const Offset(0, 10),
+            // 1:1 Aspect Ratio Logo Mark - Solid, Flat, No Gradients/Glow
+            SizedBox(
+              width: 96,
+              height: 96,
+              child: AspectRatio(
+                aspectRatio: 1.0,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF2373F4),
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(
+                      color: const Color(0xFF2373F4).withValues(alpha: 0.2),
+                      width: 1.5,
+                    ),
                   ),
-                ],
-              ),
-              child: const Center(
-                child: Icon(
-                  Icons.explore_rounded,
-                  size: 58,
-                  color: Colors.white,
+                  child: const Center(
+                    child: Icon(
+                      Icons.explore_rounded,
+                      size: 48,
+                      color: Colors.white,
+                    ),
+                  ),
                 ),
               ),
             ),
-            const SizedBox(height: 28),
-            Text(
+            const SizedBox(height: 24),
+            const Text(
               'PathFinder',
-              style: theme.textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.w800,
-                letterSpacing: 1.2,
-                color: Colors.white,
+              style: TextStyle(
+                fontSize: 26,
+                fontWeight: FontWeight.w700,
+                letterSpacing: -0.5,
+                color: Color(0xFF0F172A),
               ),
             ),
-            const SizedBox(height: 8),
-            Text(
+            const SizedBox(height: 6),
+            const Text(
               'Discover Your IT Career Path',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: Colors.white70,
-                letterSpacing: 0.5,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w400,
+                letterSpacing: 0.1,
+                color: Color(0xFF475569),
               ),
             ),
           ],

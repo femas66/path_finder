@@ -1,8 +1,20 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../../../app/router.dart';
 import '../widgets/splash_logo.dart';
 
 class SplashPage extends StatefulWidget {
-  const SplashPage({super.key});
+  const SplashPage({
+    super.key,
+    this.autoNavigate = true,
+    this.navigationDelay = const Duration(milliseconds: 2500),
+  });
+
+  final bool autoNavigate;
+  final Duration navigationDelay;
 
   @override
   State<SplashPage> createState() => _SplashPageState();
@@ -13,94 +25,76 @@ class _SplashPageState extends State<SplashPage>
   late final AnimationController _controller;
   late final Animation<double> _fadeAnimation;
   late final Animation<double> _scaleAnimation;
+  Timer? _navigationTimer;
 
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1400),
+      duration: const Duration(milliseconds: 900),
     );
 
     _fadeAnimation = CurvedAnimation(
       parent: _controller,
-      curve: const Interval(0.0, 0.7, curve: Curves.easeOut),
+      curve: const Interval(0.0, 0.8, curve: Curves.easeOut),
     );
 
-    _scaleAnimation = Tween<double>(begin: 0.82, end: 1.0).animate(
+    _scaleAnimation = Tween<double>(begin: 0.92, end: 1.0).animate(
       CurvedAnimation(
         parent: _controller,
-        curve: const Interval(0.0, 0.85, curve: Curves.easeOutCubic),
+        curve: const Interval(0.0, 0.9, curve: Curves.easeOutCubic),
       ),
     );
 
     _controller.forward();
+
+    if (widget.autoNavigate) {
+      _navigationTimer = Timer(widget.navigationDelay, () {
+        if (mounted) {
+          context.go(AppRoutePaths.onboarding);
+        }
+      });
+    }
   }
 
   @override
   void dispose() {
+    _navigationTimer?.cancel();
     _controller.dispose();
     super.dispose();
   }
 
+  void _onSkip() {
+    if (widget.autoNavigate && mounted) {
+      _navigationTimer?.cancel();
+      context.go(AppRoutePaths.onboarding);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(
-        children: [
-          Container(
-            decoration: const BoxDecoration(
-              gradient: RadialGradient(
-                center: Alignment(0, -0.2),
-                radius: 1.2,
-                colors: [
-                  Color(0xFF1E293B),
-                  Color(0xFF0F172A),
-                  Color(0xFF020617),
-                ],
+    return GestureDetector(
+      onTap: _onSkip,
+      behavior: HitTestBehavior.opaque,
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        body: Stack(
+          fit: StackFit.expand,
+          children: [
+            // Fullscreen Background Asset Image
+            Image.asset('assets/splash/bg-asset.png', fit: BoxFit.cover),
+            // Center: Logo with 1:1 Aspect Ratio, Title & Tagline
+            SafeArea(
+              child: Center(
+                child: SplashLogo(
+                  scaleAnimation: _scaleAnimation,
+                  fadeAnimation: _fadeAnimation,
+                ),
               ),
             ),
-          ),
-          Center(
-            child: SplashLogo(
-              scaleAnimation: _scaleAnimation,
-              fadeAnimation: _fadeAnimation,
-            ),
-          ),
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 48,
-            child: FadeTransition(
-              opacity: _fadeAnimation,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2.2,
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        Colors.cyanAccent.withValues(alpha: 0.8),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'PBL Project • v1.0.0',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.white38,
-                      letterSpacing: 1.0,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
