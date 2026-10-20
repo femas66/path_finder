@@ -47,7 +47,7 @@ class _LoginFormState extends State<LoginForm> {
       if (widget.onLoginSuccess != null) {
         widget.onLoginSuccess!();
       } else {
-        context.go(AppRoutePaths.story);
+        context.go(AppRoutePaths.dashboard);
       }
     });
   }

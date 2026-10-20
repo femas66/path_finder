@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../features/auth/presentation/pages/forgot_password_page.dart';
 import '../features/auth/presentation/pages/login_page.dart';
+import '../features/dashboard/presentation/pages/dashboard_page.dart';
 import '../features/onboarding/presentation/pages/onboarding_page.dart';
 import '../features/splash/presentation/pages/splash_page.dart';
 
@@ -12,6 +13,7 @@ abstract class AppRoutePaths {
   static const String login = '/login';
   static const String register = '/register';
   static const String forgotPassword = '/forgot-password';
+  static const String dashboard = '/dashboard';
   static const String story = '/story';
   static const String recommendation = '/recommendation';
 }
@@ -41,6 +43,10 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: AppRoutePaths.forgotPassword,
       builder: (context, state) => const ForgotPasswordPage(),
+    ),
+    GoRoute(
+      path: AppRoutePaths.dashboard,
+      builder: (context, state) => const DashboardPage(),
     ),
     GoRoute(
       path: AppRoutePaths.story,

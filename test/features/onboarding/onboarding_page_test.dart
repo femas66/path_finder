@@ -18,10 +18,10 @@ void main() {
       expect(find.byType(IntroductionScreen), findsOneWidget);
 
       // Verify first slide title and body
-      expect(find.text('Jelajahi Jalur Karir IT'), findsOneWidget);
+      expect(find.text('Bingung Menentukan Jalur IT?'), findsOneWidget);
       expect(
         find.text(
-          'Temukan beragam profesi teknologi masa kini mulai dari Software Engineer, Data Scientist, hingga Cyber Security.',
+          'Dunia teknologi begitu luas. Mengetahui bidang mana yang paling cocok dengan minat dan potensimu sering kali membingungkan.',
         ),
         findsOneWidget,
       );
@@ -44,13 +44,13 @@ void main() {
       await tester.tap(find.byIcon(Icons.arrow_forward_rounded));
       await tester.pumpAndSettle();
 
-      expect(find.text('Kenali Potensi Terbaikmu'), findsOneWidget);
+      expect(find.text('Cukup Ceritakan Dirimu'), findsOneWidget);
 
       // Tap Next button to go to slide 3
       await tester.tap(find.byIcon(Icons.arrow_forward_rounded));
       await tester.pumpAndSettle();
 
-      expect(find.text('Raih Karir Impianmu'), findsOneWidget);
+      expect(find.text('Rekomendasi Karir yang Tepat'), findsOneWidget);
       expect(find.text('Mulai'), findsOneWidget);
     });
   });

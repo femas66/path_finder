@@ -19,30 +19,12 @@ class SplashLogo extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // 1:1 Aspect Ratio Logo Mark - Solid, Flat, No Gradients/Glow
-            SizedBox(
-              width: 96,
-              height: 96,
-              child: AspectRatio(
-                aspectRatio: 1.0,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF2373F4),
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(
-                      color: const Color(0xFF2373F4).withValues(alpha: 0.2),
-                      width: 1.5,
-                    ),
-                  ),
-                  child: const Center(
-                    child: Icon(
-                      Icons.explore_rounded,
-                      size: 48,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ),
+            // 1:1 Aspect Ratio Logo Mark
+            Image.asset(
+              'assets/logo-transparent.png',
+              width: 100,
+              height: 100,
+              fit: BoxFit.contain,
             ),
             const SizedBox(height: 24),
             const Text(
