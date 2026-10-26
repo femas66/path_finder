@@ -47,18 +47,13 @@ void main() {
   group('CandidatesTab Widget', () {
     testWidgets('filters candidates based on selected chip', (tester) async {
       final candidates = CompanyMockData.getInitialCandidates();
-      String? changedId;
-      String? changedStatus;
 
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
             body: CandidatesTab(
               candidates: candidates,
-              onUpdateStatus: (id, status) {
-                changedId = id;
-                changedStatus = status;
-              },
+              onUpdateStatus: (id, status) {},
             ),
           ),
         ),
