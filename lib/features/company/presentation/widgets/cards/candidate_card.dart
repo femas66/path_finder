@@ -15,10 +15,6 @@ class CandidateCard extends StatelessWidget {
 
   Color _getStatusTextColor(String status) {
     switch (status) {
-      case 'Seleksi Berkas':
-        return const Color(0xFF2373F4);
-      case 'Wawancara':
-        return const Color(0xFFD97706);
       case 'Diterima':
         return const Color(0xFF059669);
       case 'Ditolak':
@@ -30,10 +26,6 @@ class CandidateCard extends StatelessWidget {
 
   Color _getStatusBgColor(String status) {
     switch (status) {
-      case 'Seleksi Berkas':
-        return const Color(0xFF2373F4).withValues(alpha: 0.1);
-      case 'Wawancara':
-        return const Color(0xFFF59E0B).withValues(alpha: 0.12);
       case 'Diterima':
         return const Color(0xFF10B981).withValues(alpha: 0.12);
       case 'Ditolak':
@@ -45,9 +37,6 @@ class CandidateCard extends StatelessWidget {
 
   void _showStatusBottomSheet(BuildContext context) {
     const statuses = [
-      'Menunggu Review',
-      'Seleksi Berkas',
-      'Wawancara',
       'Diterima',
       'Ditolak',
     ];

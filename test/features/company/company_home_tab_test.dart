@@ -55,7 +55,7 @@ void main() {
       // Verify Metrics Card titles
       expect(find.text('Lowongan Aktif'), findsOneWidget);
       expect(find.text('Total Pelamar'), findsOneWidget);
-      expect(find.text('Wawancara'), findsOneWidget);
+      expect(find.text('Diterima'), findsOneWidget);
 
       // Verify Job Items rendered
       expect(find.text(jobs.first.title), findsOneWidget);

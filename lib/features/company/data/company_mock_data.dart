@@ -71,7 +71,7 @@ class CompanyMockData {
         major: 'Teknik Informatika • Semester 6',
         appliedDate: '24 Oktober 2026',
         matchScore: 94,
-        status: 'Seleksi Berkas',
+        status: 'Diterima',
         notes: 'Portofolio Flutter sangat solid, aktif berkontribusi open source.',
       ),
       const CandidateApplication(
@@ -83,8 +83,8 @@ class CompanyMockData {
         major: 'Ilmu Komputer • Semester 6',
         appliedDate: '23 Oktober 2026',
         matchScore: 89,
-        status: 'Wawancara',
-        notes: 'Jadwal wawancara teknis: Kamis, 29 Oktober 2026 pukul 14.00 WIB.',
+        status: 'Diterima',
+        notes: 'Hasil tes teknis sangat memuaskan.',
       ),
       const CandidateApplication(
         id: 'cand-3',
@@ -95,8 +95,8 @@ class CompanyMockData {
         major: 'Teknik Informatika • Semester 7',
         appliedDate: '25 Oktober 2026',
         matchScore: 91,
-        status: 'Menunggu Review',
-        notes: 'CV dan link GitHub telah masuk antrean peninjauan HR.',
+        status: 'Ditolak',
+        notes: 'Kandidat telah menerima penawaran di perusahaan lain.',
       ),
       const CandidateApplication(
         id: 'cand-4',
