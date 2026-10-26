@@ -34,13 +34,13 @@ void main() {
       await tester.tap(changeStatusBtn);
       await tester.pumpAndSettle();
 
-      // Tap "Wawancara" in bottom sheet
-      final wawancaraOption = find.widgetWithText(ListTile, 'Wawancara');
-      expect(wawancaraOption, findsOneWidget);
-      await tester.tap(wawancaraOption);
+      // Tap "Ditolak" in bottom sheet
+      final ditolakOption = find.widgetWithText(ListTile, 'Ditolak');
+      expect(ditolakOption, findsOneWidget);
+      await tester.tap(ditolakOption);
       await tester.pumpAndSettle();
 
-      expect(updatedStatus, 'Wawancara');
+      expect(updatedStatus, 'Ditolak');
     });
   });
 
@@ -64,24 +64,26 @@ void main() {
       expect(find.text('Farhan Rizki'), findsOneWidget);
 
       // Tap filter chip "Diterima"
-      final diterimaChip = find.text('Diterima');
+      final diterimaChip = find.widgetWithText(InkWell, 'Diterima');
       expect(diterimaChip, findsOneWidget);
       await tester.ensureVisible(diterimaChip);
       await tester.tap(diterimaChip);
       await tester.pumpAndSettle();
 
-      // Only Budi Santoso is Diterima
+      // Budi Santoso and Aditya Pratama are Diterima, Aulia Rahma is Ditolak
       expect(find.text('Budi Santoso'), findsOneWidget);
-      expect(find.text('Aditya Pratama'), findsNothing);
+      expect(find.text('Aditya Pratama'), findsOneWidget);
+      expect(find.text('Aulia Rahma'), findsNothing);
 
       // Tap filter chip "Ditolak"
-      final ditolakChip = find.text('Ditolak');
+      final ditolakChip = find.widgetWithText(InkWell, 'Ditolak');
       expect(ditolakChip, findsOneWidget);
       await tester.ensureVisible(ditolakChip);
       await tester.tap(ditolakChip);
       await tester.pumpAndSettle();
 
       expect(find.text('Aulia Rahma'), findsOneWidget);
+      expect(find.text('Siti Nurhaliza'), findsOneWidget);
       expect(find.text('Budi Santoso'), findsNothing);
     });
   });

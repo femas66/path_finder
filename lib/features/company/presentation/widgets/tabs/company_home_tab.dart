@@ -23,8 +23,8 @@ class CompanyHomeTab extends StatelessWidget {
   Widget build(BuildContext context) {
     final activeJobs = jobs.where((j) => j.isActive).length;
     final totalApplicants = candidates.length;
-    final interviewCount =
-        candidates.where((c) => c.status == 'Wawancara').length;
+    final acceptedCount =
+        candidates.where((c) => c.status == 'Diterima').length;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
@@ -60,11 +60,11 @@ class CompanyHomeTab extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: _buildMetricCard(
-                  label: 'Wawancara',
-                  value: '$interviewCount',
-                  icon: Icons.contact_phone_outlined,
-                  iconColor: const Color(0xFFF59E0B),
-                  bgColor: const Color(0xFFF59E0B).withValues(alpha: 0.08),
+                  label: 'Diterima',
+                  value: '$acceptedCount',
+                  icon: Icons.check_circle_outline_rounded,
+                  iconColor: const Color(0xFF059669),
+                  bgColor: const Color(0xFF10B981).withValues(alpha: 0.08),
                 ),
               ),
             ],

@@ -52,22 +52,22 @@ void main() {
         major: 'Teknik Informatika • Semester 6',
         appliedDate: '24 Oktober 2026',
         matchScore: 94,
-        status: 'Menunggu Review',
+        status: 'Diterima',
         notes: 'Portofolio Flutter sangat relevan.',
       );
 
       expect(candidate.id, 'cand-1');
       expect(candidate.candidateName, 'Aditya Pratama');
-      expect(candidate.status, 'Menunggu Review');
+      expect(candidate.status, 'Diterima');
       expect(candidate.matchScore, 94);
 
       final updated = candidate.copyWith(
-        status: 'Wawancara',
-        notes: 'Dijadwalkan wawancara teknis 30 Oktober 2026.',
+        status: 'Ditolak',
+        notes: 'Kuota posisi sudah terpenuhi.',
       );
 
-      expect(updated.status, 'Wawancara');
-      expect(updated.notes, contains('30 Oktober 2026'));
+      expect(updated.status, 'Ditolak');
+      expect(updated.notes, contains('Kuota posisi sudah terpenuhi.'));
       expect(updated.candidateName, 'Aditya Pratama');
     });
   });

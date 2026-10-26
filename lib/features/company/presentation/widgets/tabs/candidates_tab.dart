@@ -23,9 +23,6 @@ class _CandidatesTabState extends State<CandidatesTab> {
 
   static const List<String> _filters = [
     'Semua',
-    'Menunggu Review',
-    'Seleksi Berkas',
-    'Wawancara',
     'Diterima',
     'Ditolak',
   ];
