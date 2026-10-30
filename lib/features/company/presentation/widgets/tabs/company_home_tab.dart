@@ -23,8 +23,9 @@ class CompanyHomeTab extends StatelessWidget {
   Widget build(BuildContext context) {
     final activeJobs = jobs.where((j) => j.isActive).length;
     final totalApplicants = candidates.length;
-    final acceptedCount =
-        candidates.where((c) => c.status == 'Diterima').length;
+    final acceptedCount = candidates
+        .where((c) => c.status == 'Diterima')
+        .length;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
@@ -87,17 +88,12 @@ class CompanyHomeTab extends StatelessWidget {
               onButtonPressed: onNavigateToPostJob,
             )
           else
-            ...jobs.map((job) => CompanyJobCard(
-                  job: job,
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Detail lowongan: ${job.title}'),
-                        duration: const Duration(seconds: 1),
-                      ),
-                    );
-                  },
-                )),
+            ...jobs.map(
+              (job) => CompanyJobCard(
+                job: job,
+                onTap: () => _showJobDetailBottomSheet(context, job),
+              ),
+            ),
 
           const SizedBox(height: 20),
 
@@ -118,6 +114,317 @@ class CompanyHomeTab extends StatelessWidget {
             ...candidates.take(2).map((cand) => _buildQuickCandidateTile(cand)),
         ],
       ),
+    );
+  }
+
+  void _showJobDetailBottomSheet(BuildContext context, JobPosting job) {
+    final skillList = job.requiredSkills
+        .split(',')
+        .map((s) => s.trim())
+        .where((s) => s.isNotEmpty)
+        .toList();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.75,
+          minChildSize: 0.5,
+          maxChildSize: 0.95,
+          expand: false,
+          builder: (context, scrollController) {
+            return ListView(
+              controller: scrollController,
+              padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+              children: [
+                // Drag Handle
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE2E8F0),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Header: Title & Active Badge
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            job.title,
+                            style: GoogleFonts.sen(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: const Color(0xFF0F172A),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${job.companyName} • ${job.location}',
+                            style: GoogleFonts.sen(
+                              fontSize: 12,
+                              color: const Color(0xFF64748B),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: job.isActive
+                            ? const Color(0xFF10B981).withValues(alpha: 0.12)
+                            : const Color(0xFF64748B).withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        job.isActive ? 'Aktif Menerima' : 'Ditutup',
+                        style: GoogleFonts.sen(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: job.isActive
+                              ? const Color(0xFF059669)
+                              : const Color(0xFF64748B),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                const Divider(color: Color(0xFFE2E8F0), height: 1),
+                const SizedBox(height: 16),
+
+                // Info Cards Grid
+                Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF8FAFC),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Kuota Peserta',
+                              style: GoogleFonts.sen(
+                                fontSize: 11,
+                                color: const Color(0xFF64748B),
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              '${job.quota} Mahasiswa',
+                              style: GoogleFonts.sen(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: const Color(0xFF0F172A),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF8FAFC),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Total Pelamar',
+                              style: GoogleFonts.sen(
+                                fontSize: 11,
+                                color: const Color(0xFF64748B),
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              '${job.applicantsCount} Pelamar',
+                              style: GoogleFonts.sen(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: const Color(0xFF2373F4),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                // Periode
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.event_note_rounded,
+                      size: 16,
+                      color: Color(0xFF64748B),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Periode: ${job.executionPeriod}',
+                        style: GoogleFonts.sen(
+                          fontSize: 12,
+                          color: const Color(0xFF334155),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+
+                // Durasi Seleksi
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.hourglass_bottom_rounded,
+                      size: 16,
+                      color: Color(0xFF64748B),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Durasi Seleksi: ${job.selectionDuration}',
+                        style: GoogleFonts.sen(
+                          fontSize: 12,
+                          color: const Color(0xFF334155),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 18),
+
+                // Deskripsi
+                Text(
+                  'Deskripsi Pekerjaan',
+                  style: GoogleFonts.sen(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF0F172A),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  job.description,
+                  style: GoogleFonts.sen(
+                    fontSize: 12.5,
+                    color: const Color(0xFF475569),
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 18),
+
+                // Required Skills
+                Text(
+                  'Keahlian yang Dibutuhkan',
+                  style: GoogleFonts.sen(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF0F172A),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: skillList.map((skill) {
+                    return Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF2373F4).withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(
+                          color: const Color(0xFF2373F4).withValues(alpha: 0.2),
+                        ),
+                      ),
+                      child: Text(
+                        skill,
+                        style: GoogleFonts.sen(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF2373F4),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 18),
+
+                // Fasilitas
+                Text(
+                  'Fasilitas & Benefit Magang',
+                  style: GoogleFonts.sen(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF0F172A),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  job.facilities,
+                  style: GoogleFonts.sen(
+                    fontSize: 12.5,
+                    color: const Color(0xFF475569),
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 28),
+
+                // Action Buttons
+                FilledButton.icon(
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    onNavigateToCandidates();
+                  },
+                  icon: const Icon(Icons.people_alt_outlined, size: 18),
+                  label: Text(
+                    'Lihat ${job.applicantsCount} Pelamar Posisi Ini',
+                  ),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFF2373F4),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 
