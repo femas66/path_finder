@@ -5,6 +5,7 @@ class JobPosting {
     required this.field,
     required this.quota,
     required this.executionPeriod,
+    this.selectionDuration = '7 Hari Kerja',
     required this.description,
     required this.facilities,
     required this.requiredSkills,
@@ -20,6 +21,7 @@ class JobPosting {
   final String field;
   final int quota;
   final String executionPeriod;
+  final String selectionDuration;
   final String description;
   final String facilities;
   final String requiredSkills;
@@ -35,6 +37,7 @@ class JobPosting {
     String? field,
     int? quota,
     String? executionPeriod,
+    String? selectionDuration,
     String? description,
     String? facilities,
     String? requiredSkills,
@@ -50,6 +53,7 @@ class JobPosting {
       field: field ?? this.field,
       quota: quota ?? this.quota,
       executionPeriod: executionPeriod ?? this.executionPeriod,
+      selectionDuration: selectionDuration ?? this.selectionDuration,
       description: description ?? this.description,
       facilities: facilities ?? this.facilities,
       requiredSkills: requiredSkills ?? this.requiredSkills,
