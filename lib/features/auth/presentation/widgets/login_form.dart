@@ -28,9 +28,35 @@ class _LoginFormState extends State<LoginForm> {
     super.dispose();
   }
 
+  void _setDemoAccount({required String email, required String password}) {
+    setState(() {
+      _usernameOrEmailController.text = email;
+      _passwordController.text = password;
+    });
+  }
+
   void _submit() {
     if (!_formKey.currentState!.validate()) {
       return;
+    }
+
+    final email = _usernameOrEmailController.text.trim().toLowerCase();
+    final password = _passwordController.text;
+
+    // Validasi akun mitra
+    if (email == 'mitra@gmail.com') {
+      if (password != 'mitra123') {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            backgroundColor: Color(0xFFDC2626),
+            content: Text(
+              'Kata sandi salah. Gunakan "mitra123" untuk akun mitra.',
+            ),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        return;
+      }
     }
 
     setState(() {
@@ -47,7 +73,11 @@ class _LoginFormState extends State<LoginForm> {
       if (widget.onLoginSuccess != null) {
         widget.onLoginSuccess!();
       } else {
-        context.go(AppRoutePaths.dashboard);
+        if (email == 'mitra@gmail.com') {
+          context.go(AppRoutePaths.companyDashboard);
+        } else {
+          context.go(AppRoutePaths.dashboard);
+        }
       }
     });
   }
@@ -60,6 +90,162 @@ class _LoginFormState extends State<LoginForm> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
         children: [
+          // Selector Cepat Akun Demo (Mitra & Mahasiswa)
+          Container(
+            padding: const EdgeInsets.all(12),
+            margin: const EdgeInsets.only(bottom: 18),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.account_circle_outlined,
+                      size: 15,
+                      color: Color(0xFF2373F4),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Pilih Cepat Akun Demo:',
+                      style: GoogleFonts.sen(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF334155),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: InkWell(
+                        onTap: () => _setDemoAccount(
+                          email: 'mitra@gmail.com',
+                          password: 'mitra123',
+                        ),
+                        borderRadius: BorderRadius.circular(8),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color:
+                                _usernameOrEmailController.text ==
+                                    'mitra@gmail.com'
+                                ? const Color(0xFF2373F4)
+                                : Colors.white,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color:
+                                  _usernameOrEmailController.text ==
+                                      'mitra@gmail.com'
+                                  ? const Color(0xFF2373F4)
+                                  : const Color(0xFFCBD5E1),
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Role Mitra',
+                                style: GoogleFonts.sen(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color:
+                                      _usernameOrEmailController.text ==
+                                          'mitra@gmail.com'
+                                      ? Colors.white
+                                      : const Color(0xFF0F172A),
+                                ),
+                              ),
+                              Text(
+                                'mitra@gmail.com',
+                                style: GoogleFonts.sen(
+                                  fontSize: 9.5,
+                                  color:
+                                      _usernameOrEmailController.text ==
+                                          'mitra@gmail.com'
+                                      ? Colors.white.withValues(alpha: 0.85)
+                                      : const Color(0xFF64748B),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: InkWell(
+                        onTap: () => _setDemoAccount(
+                          email: 'mahasiswa@gmail.com',
+                          password: 'password123',
+                        ),
+                        borderRadius: BorderRadius.circular(8),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color:
+                                _usernameOrEmailController.text ==
+                                    'mahasiswa@gmail.com'
+                                ? const Color(0xFF2373F4)
+                                : Colors.white,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color:
+                                  _usernameOrEmailController.text ==
+                                      'mahasiswa@gmail.com'
+                                  ? const Color(0xFF2373F4)
+                                  : const Color(0xFFCBD5E1),
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Mahasiswa',
+                                style: GoogleFonts.sen(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color:
+                                      _usernameOrEmailController.text ==
+                                          'mahasiswa@gmail.com'
+                                      ? Colors.white
+                                      : const Color(0xFF0F172A),
+                                ),
+                              ),
+                              Text(
+                                'mahasiswa@gmail.com',
+                                style: GoogleFonts.sen(
+                                  fontSize: 9.5,
+                                  color:
+                                      _usernameOrEmailController.text ==
+                                          'mahasiswa@gmail.com'
+                                      ? Colors.white.withValues(alpha: 0.85)
+                                      : const Color(0xFF64748B),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
           // Label: Username / Email
           Text(
             'Email',

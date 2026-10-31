@@ -5,7 +5,9 @@ import 'package:path_finder/features/company/presentation/widgets/forms/post_job
 
 void main() {
   group('PostJobForm Widget', () {
-    testWidgets('shows validation errors when submitted with empty fields', (tester) async {
+    testWidgets('shows validation errors when submitted with empty fields', (
+      tester,
+    ) async {
       JobPosting? createdJob;
 
       await tester.pumpWidget(
@@ -51,7 +53,9 @@ void main() {
       expect(createdJob, isNull);
     });
 
-    testWidgets('successfully submits form and returns valid JobPosting', (tester) async {
+    testWidgets('successfully submits form and returns valid JobPosting', (
+      tester,
+    ) async {
       JobPosting? createdJob;
 
       await tester.pumpWidget(
@@ -70,7 +74,10 @@ void main() {
 
       // Fill in all 7 fields
       await tester.enterText(
-        find.widgetWithText(TextFormField, 'Contoh: Mobile Flutter Engineer Intern'),
+        find.widgetWithText(
+          TextFormField,
+          'Contoh: Mobile Flutter Engineer Intern',
+        ),
         'AI Engineer Intern',
       );
       await tester.enterText(
@@ -82,19 +89,31 @@ void main() {
         '4',
       );
       await tester.enterText(
-        find.widgetWithText(TextFormField, 'Contoh: 1 Januari 2027 s.d. 31 Juli 2027'),
+        find.widgetWithText(
+          TextFormField,
+          'Contoh: 1 Januari 2027 s.d. 31 Juli 2027',
+        ),
         '1 Januari 2027 s.d. 31 Juli 2027',
       );
       await tester.enterText(
-        find.widgetWithText(TextFormField, 'Jelaskan tanggung jawab dan lingkup pekerjaan magang...'),
+        find.widgetWithText(
+          TextFormField,
+          'Jelaskan tanggung jawab dan lingkup pekerjaan magang...',
+        ),
         'Mengembangkan pipeline machine learning dan integrasi LLM.',
       );
       await tester.enterText(
-        find.widgetWithText(TextFormField, 'Contoh: Uang saku, laptop kerja, sertifikat magang, mentoring...'),
+        find.widgetWithText(
+          TextFormField,
+          'Contoh: Uang saku, laptop kerja, sertifikat magang, mentoring...',
+        ),
         'Uang saku bulanan, sertifikat resmi, bimbingan 1-on-1.',
       );
       await tester.enterText(
-        find.widgetWithText(TextFormField, 'Contoh: Python, TensorFlow, PyTorch, REST API...'),
+        find.widgetWithText(
+          TextFormField,
+          'Contoh: Python, TensorFlow, PyTorch, REST API...',
+        ),
         'Python, PyTorch, HuggingFace, FastAPI',
       );
 
@@ -115,6 +134,224 @@ void main() {
       expect(createdJob!.facilities, contains('Uang saku bulanan'));
       expect(createdJob!.requiredSkills, contains('Python, PyTorch'));
       expect(createdJob!.isActive, isTrue);
+    });
+
+    testWidgets(
+      'shows specific validation errors for invalid input lengths and ranges',
+      (tester) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: SingleChildScrollView(
+                child: PostJobForm(onSubmitSuccess: (job) {}),
+              ),
+            ),
+          ),
+        );
+
+        // Enter too short title
+        await tester.enterText(
+          find.widgetWithText(
+            TextFormField,
+            'Contoh: Mobile Flutter Engineer Intern',
+          ),
+          'AB',
+        );
+        // Enter quota > 100
+        await tester.enterText(
+          find.widgetWithText(TextFormField, 'Contoh: 3'),
+          '150',
+        );
+        // Enter too short description
+        await tester.enterText(
+          find.widgetWithText(
+            TextFormField,
+            'Jelaskan tanggung jawab dan lingkup pekerjaan magang...',
+          ),
+          'Terlalu pendek',
+        );
+
+        final submitButton = find.text('Publikasikan Lowongan');
+        await tester.ensureVisible(submitButton);
+        await tester.tap(submitButton);
+        await tester.pumpAndSettle();
+
+        expect(find.text('Judul posisi minimal 3 karakter'), findsOneWidget);
+        expect(find.text('Kuota magang maksimal 100 orang'), findsOneWidget);
+        expect(
+          find.text(
+            'Deskripsi minimal 15 karakter agar informatif bagi pelamar',
+          ),
+          findsOneWidget,
+        );
+      },
+    );
+
+    testWidgets('tapping Gunakan Template Contoh autofills all form fields', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: PostJobForm(onSubmitSuccess: (job) {}),
+            ),
+          ),
+        ),
+      );
+
+      final templateBtn = find.text('Gunakan Template Contoh');
+      expect(templateBtn, findsOneWidget);
+      await tester.tap(templateBtn);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Mobile Flutter Engineer Intern'), findsOneWidget);
+      expect(
+        find.widgetWithText(TextFormField, 'Software Engineering'),
+        findsOneWidget,
+      );
+      expect(find.text('3'), findsOneWidget);
+      expect(find.text('1 Januari 2027 s.d. 31 Juli 2027'), findsOneWidget);
+    });
+
+    testWidgets(
+      'kuota field enforces digitsOnly and calendar picker button is present',
+      (tester) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: SingleChildScrollView(
+                child: PostJobForm(onSubmitSuccess: (job) {}),
+              ),
+            ),
+          ),
+        );
+
+        // Verify kuota input only accepts numbers (digitsOnly formatter)
+        final kuotaField = find.widgetWithText(TextFormField, 'Contoh: 3');
+        expect(kuotaField, findsOneWidget);
+        await tester.enterText(kuotaField, 'abc12xyz');
+        expect(find.text('12'), findsOneWidget);
+
+        // Verify calendar button is present with correct icon
+        final calendarIconBtn = find.byIcon(Icons.calendar_month_rounded);
+        expect(calendarIconBtn, findsOneWidget);
+        await tester.tap(calendarIconBtn);
+        await tester.pumpAndSettle();
+
+        // Verify date range picker dialog opened
+        expect(find.byType(DateRangePickerDialog), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'renders cleanly on narrow 320px width screens without any RenderFlex overflow',
+      (tester) async {
+        tester.view.physicalSize = const Size(320, 600);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(() {
+          tester.view.resetPhysicalSize();
+          tester.view.resetDevicePixelRatio();
+        });
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: SingleChildScrollView(
+                child: PostJobForm(onSubmitSuccess: (job) {}),
+              ),
+            ),
+          ),
+        );
+
+        // Expect no overflow exception was caught
+        expect(tester.takeException(), isNull);
+        expect(find.text('Judul Posisi'), findsOneWidget);
+        expect(find.text('Tanggal Pelaksanaan'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'tapping fasilitas suggestion chip appends text and updates selection to end',
+      (tester) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: SingleChildScrollView(
+                child: PostJobForm(onSubmitSuccess: (job) {}),
+              ),
+            ),
+          ),
+        );
+
+        final chipFinder = find.text('+ Uang saku bulanan kompetitif');
+        await tester.scrollUntilVisible(
+          chipFinder,
+          200,
+          scrollable: find.byType(Scrollable).first,
+        );
+        expect(chipFinder, findsOneWidget);
+        await tester.tap(chipFinder);
+        await tester.pumpAndSettle();
+
+        expect(find.text('Uang saku bulanan kompetitif'), findsWidgets);
+
+        final secondChip = find.text('+ Laptop kerja MacBook');
+        await tester.tap(secondChip);
+        await tester.pumpAndSettle();
+
+        expect(
+          find.text('Uang saku bulanan kompetitif, Laptop kerja MacBook'),
+          findsOneWidget,
+        );
+      },
+    );
+
+    testWidgets('durasi seleksi field validates and chip updates value', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: PostJobForm(onSubmitSuccess: (job) {}),
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('Durasi Seleksi'), findsOneWidget);
+      expect(
+        find.widgetWithText(TextFormField, '7 Hari Kerja'),
+        findsOneWidget,
+      );
+
+      // Scroll and tap 14 Hari Kerja chip
+      final durasiChip = find.widgetWithText(ActionChip, '14 Hari Kerja');
+      await tester.scrollUntilVisible(
+        durasiChip,
+        150,
+        scrollable: find.byType(Scrollable).first,
+      );
+      expect(durasiChip, findsOneWidget);
+      await tester.tap(durasiChip);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.widgetWithText(TextFormField, '14 Hari Kerja'),
+        findsOneWidget,
+      );
+
+      // Test empty validation
+      final durasiField = find.widgetWithText(TextFormField, '14 Hari Kerja');
+      await tester.enterText(durasiField, '');
+
+      final submitBtn = find.text('Publikasikan Lowongan');
+      await tester.ensureVisible(submitBtn);
+      await tester.tap(submitBtn);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Durasi seleksi wajib diisi'), findsOneWidget);
     });
   });
 }
