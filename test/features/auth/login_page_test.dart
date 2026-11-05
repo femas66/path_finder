@@ -1,16 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:path_finder/app/router.dart';
 import 'package:path_finder/features/auth/presentation/pages/login_page.dart';
 import 'package:path_finder/features/auth/presentation/widgets/login_form.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
+  setUp(() {
+    SharedPreferences.setMockInitialValues({});
+  });
+
   group('LoginPage & LoginForm Tests', () {
     testWidgets('renders login form and demo account selector chips', (
       tester,
     ) async {
-      await tester.pumpWidget(const MaterialApp(home: LoginPage()));
+      await tester.pumpWidget(
+        const ProviderScope(
+          child: MaterialApp(home: LoginPage()),
+        ),
+      );
 
       expect(find.text('Log In'), findsOneWidget);
       expect(find.text('Pilih Cepat Akun Demo:'), findsOneWidget);
@@ -24,8 +34,10 @@ void main() {
       tester,
     ) async {
       await tester.pumpWidget(
-        const MaterialApp(
-          home: Scaffold(body: SingleChildScrollView(child: LoginForm())),
+        const ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(body: SingleChildScrollView(child: LoginForm())),
+          ),
         ),
       );
 
@@ -46,8 +58,10 @@ void main() {
       tester,
     ) async {
       await tester.pumpWidget(
-        const MaterialApp(
-          home: Scaffold(body: SingleChildScrollView(child: LoginForm())),
+        const ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(body: SingleChildScrollView(child: LoginForm())),
+          ),
         ),
       );
 
@@ -68,8 +82,10 @@ void main() {
       tester,
     ) async {
       await tester.pumpWidget(
-        const MaterialApp(
-          home: Scaffold(body: SingleChildScrollView(child: LoginForm())),
+        const ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(body: SingleChildScrollView(child: LoginForm())),
+          ),
         ),
       );
 
@@ -113,7 +129,11 @@ void main() {
           ],
         );
 
-        await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+        await tester.pumpWidget(
+          ProviderScope(
+            child: MaterialApp.router(routerConfig: router),
+          ),
+        );
 
         // Tap Role Mitra demo chip
         await tester.tap(find.text('Role Mitra'));
