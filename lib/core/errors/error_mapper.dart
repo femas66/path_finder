@@ -41,10 +41,18 @@ class ErrorMapper {
 
         String message = 'Terjadi kesalahan dari server.';
         if (responseData is Map) {
-          if (responseData['detail'] != null) {
-            message = responseData['detail'].toString();
-          } else if (responseData['message'] != null) {
+          if (responseData['message'] != null &&
+              responseData['message'].toString().trim().isNotEmpty) {
             message = responseData['message'].toString();
+          } else if (responseData['errors'] != null &&
+              responseData['errors'].toString().trim().isNotEmpty) {
+            message = responseData['errors'].toString();
+          } else if (responseData['detail'] != null &&
+              responseData['detail'].toString().trim().isNotEmpty) {
+            message = responseData['detail'].toString();
+          } else if (responseData['error'] is Map &&
+              responseData['error']['message'] != null) {
+            message = responseData['error']['message'].toString();
           }
         }
 

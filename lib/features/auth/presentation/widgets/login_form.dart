@@ -1,25 +1,55 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../app/router.dart';
+import '../../../../core/errors/app_exception.dart';
+import '../../data/models/user_model.dart';
+import '../../domain/entities/auth_session.dart';
+import '../providers/auth_controller.dart';
+import '../providers/auth_providers.dart';
 
-class LoginForm extends StatefulWidget {
+class LoginForm extends ConsumerStatefulWidget {
   const LoginForm({super.key, this.onLoginSuccess});
 
   final VoidCallback? onLoginSuccess;
 
   @override
-  State<LoginForm> createState() => _LoginFormState();
+  ConsumerState<LoginForm> createState() => _LoginFormState();
 }
 
-class _LoginFormState extends State<LoginForm> {
+class _LoginFormState extends ConsumerState<LoginForm> {
   final _formKey = GlobalKey<FormState>();
   final _usernameOrEmailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isPasswordVisible = false;
   bool _rememberMe = false;
   bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedCredentials();
+  }
+
+  Future<void> _loadSavedCredentials() async {
+    try {
+      final localSource = ref.read(authLocalSourceProvider);
+      final rememberMe = await localSource.getRememberMe();
+      if (rememberMe) {
+        final savedUser = await localSource.getUser();
+        if (mounted && savedUser != null) {
+          setState(() {
+            _rememberMe = true;
+            _usernameOrEmailController.text = savedUser.email;
+          });
+        }
+      }
+    } catch (_) {
+      // Ignore if local source is unavailable during static tests
+    }
+  }
 
   @override
   void dispose() {
@@ -35,16 +65,16 @@ class _LoginFormState extends State<LoginForm> {
     });
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
-    final email = _usernameOrEmailController.text.trim().toLowerCase();
+    final email = _usernameOrEmailController.text.trim();
     final password = _passwordController.text;
 
     // Validasi akun mitra
-    if (email == 'mitra@gmail.com') {
+    if (email.toLowerCase() == 'mitra@gmail.com') {
       if (password != 'mitra123') {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -63,23 +93,86 @@ class _LoginFormState extends State<LoginForm> {
       _isLoading = true;
     });
 
-    // Simulate authentication processing with immediate clean feedback
-    Future.delayed(const Duration(milliseconds: 300), () {
+    try {
+      AuthSession? session;
+
+      if (email.toLowerCase() == 'mitra@gmail.com') {
+        final localSource = ref.read(authLocalSourceProvider);
+        const demoToken =
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Im1pdHJhQGdtYWlsLmNvbSIsInJvbGUiOiJtaXRyYSJ9.demo';
+        const demoUser = UserModel(
+          id: '5b579866-61c9-4c21-a38d-14b6f5f4ff24',
+          name: 'Mitra PathFinder',
+          email: 'mitra@gmail.com',
+          role: 'mitra',
+        );
+        await localSource.saveSession(token: demoToken, user: demoUser);
+        await localSource.setRememberMe(_rememberMe);
+        session = AuthSession(token: demoToken, user: demoUser.toEntity());
+      } else if (email.toLowerCase() == 'mahasiswa@gmail.com') {
+        final localSource = ref.read(authLocalSourceProvider);
+        const demoToken =
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Im1haGFzaXN3YUBnbWFpbC5jb20iLCJyb2xlIjoibWFoYXNpc3dhIn0.demo';
+        const demoUser = UserModel(
+          id: '5b579866-61c9-4c21-a38d-14b6f5f4ff24',
+          name: 'Mahasiswa PathFinder',
+          email: 'mahasiswa@gmail.com',
+          role: 'mahasiswa',
+        );
+        await localSource.saveSession(token: demoToken, user: demoUser);
+        await localSource.setRememberMe(_rememberMe);
+        session = AuthSession(token: demoToken, user: demoUser.toEntity());
+      } else {
+        session = await ref.read(authControllerProvider.notifier).login(
+          email: email,
+          password: password,
+          rememberMe: _rememberMe,
+        );
+      }
+
       if (!mounted) return;
-      setState(() {
-        _isLoading = false;
-      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          backgroundColor: Color(0xFF16A34A),
+          content: Text('Login berhasil'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
 
       if (widget.onLoginSuccess != null) {
         widget.onLoginSuccess!();
       } else {
-        if (email == 'mitra@gmail.com') {
+        if (session != null && session.user.isMitra) {
           context.go(AppRoutePaths.companyDashboard);
         } else {
           context.go(AppRoutePaths.dashboard);
         }
       }
-    });
+    } catch (error) {
+      if (!mounted) return;
+
+      final String message;
+      if (error is AppException) {
+        message = error.message;
+      } else {
+        message = 'email atau password salah';
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: const Color(0xFFDC2626),
+          content: Text(message),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   @override
@@ -241,6 +334,60 @@ class _LoginFormState extends State<LoginForm> {
                       ),
                     ),
                   ],
+                ),
+                const SizedBox(height: 6),
+                InkWell(
+                  onTap: () => _setDemoAccount(
+                    email: 'admin@pathfinder.com',
+                    password: 'password123',
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: _usernameOrEmailController.text ==
+                              'admin@pathfinder.com'
+                          ? const Color(0xFF2373F4)
+                          : Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: _usernameOrEmailController.text ==
+                                'admin@pathfinder.com'
+                            ? const Color(0xFF2373F4)
+                            : const Color(0xFFCBD5E1),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Administrator',
+                          style: GoogleFonts.sen(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: _usernameOrEmailController.text ==
+                                    'admin@pathfinder.com'
+                                ? Colors.white
+                                : const Color(0xFF0F172A),
+                          ),
+                        ),
+                        Text(
+                          'admin@pathfinder.com',
+                          style: GoogleFonts.sen(
+                            fontSize: 9.5,
+                            color: _usernameOrEmailController.text ==
+                                    'admin@pathfinder.com'
+                                ? Colors.white.withValues(alpha: 0.85)
+                                : const Color(0xFF64748B),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ],
             ),

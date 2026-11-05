@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import '../config/env.dart';
 
-Dio createDioClient() {
+Dio createDioClient({Future<String?> Function()? getToken}) {
   final options = BaseOptions(
     baseUrl: Env.baseUrl,
     connectTimeout: Env.connectTimeout,
@@ -14,6 +14,22 @@ Dio createDioClient() {
   );
 
   final dio = Dio(options);
+
+  if (getToken != null) {
+    dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) async {
+          try {
+            final token = await getToken();
+            if (token != null && token.isNotEmpty) {
+              options.headers['Authorization'] = 'Bearer $token';
+            }
+          } catch (_) {}
+          return handler.next(options);
+        },
+      ),
+    );
+  }
 
   dio.interceptors.add(
     LogInterceptor(
