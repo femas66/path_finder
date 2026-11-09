@@ -91,7 +91,8 @@ class _HomeTab extends StatelessWidget {
             title: 'Backend Engineer Intern',
             company: 'PT Tokopedia',
             appliedDate: 'Dilamar 2 hari lalu',
-            status: 'Seleksi Berkas',
+            status: 'Menunggu',
+            currentStep: 2,
             isCompact: true,
             onTap: onNavigateToApplications,
           ),
@@ -496,13 +497,268 @@ class _JobsTab extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
-// Tab 3: Lamaran (Applications / Melihat Status Lamaran)
+// Tab 3: Pelacakan Lamaran (Mahasiswa) - List riwayat lamaran & indikator status
 // ---------------------------------------------------------------------------
-class _ApplicationsTab extends StatelessWidget {
+class _ApplicationItem {
+  const _ApplicationItem({
+    required this.title,
+    required this.company,
+    required this.appliedDate,
+    required this.status,
+    required this.note,
+    this.currentStep,
+  });
+
+  final String title;
+  final String company;
+  final String appliedDate;
+  final String status;
+  final String note;
+  final int? currentStep;
+}
+
+class _ApplicationsTab extends StatefulWidget {
   const _ApplicationsTab();
 
   @override
+  State<_ApplicationsTab> createState() => _ApplicationsTabState();
+}
+
+class _ApplicationsTabState extends State<_ApplicationsTab> {
+  String _selectedFilter = 'Semua';
+
+  static const List<_ApplicationItem> _allApplications = [
+    _ApplicationItem(
+      title: 'Backend Engineer Intern',
+      company: 'PT Tokopedia',
+      appliedDate: '17 Oktober 2026',
+      status: 'Menunggu',
+      note: 'Tahap Seleksi Berkas sedang ditinjau oleh HR & Tech Lead.',
+      currentStep: 2,
+    ),
+    _ApplicationItem(
+      title: 'Mobile App Developer Apprentice',
+      company: 'Shopee Indonesia',
+      appliedDate: '10 Oktober 2026',
+      status: 'Diterima',
+      note:
+          'Selamat! Kamu dinyatakan lolos. Cek email untuk penawaran offering letter.',
+      currentStep: 4,
+    ),
+    _ApplicationItem(
+      title: 'UI/UX Designer Intern',
+      company: 'Bukalapak',
+      appliedDate: '05 Oktober 2026',
+      status: 'Ditolak',
+      note:
+          'Terima kasih atas minatmu. Saat ini kualifikasi belum sesuai kebutuhan tim.',
+      currentStep: 1,
+    ),
+    _ApplicationItem(
+      title: 'Frontend Developer Intern',
+      company: 'PT Telkom Indonesia',
+      appliedDate: '15 Oktober 2026',
+      status: 'Menunggu',
+      note: 'Menunggu konfirmasi jadwal wawancara teknis via Google Meet.',
+      currentStep: 3,
+    ),
+  ];
+
+  List<_ApplicationItem> get _filteredApplications {
+    if (_selectedFilter == 'Semua') return _allApplications;
+    return _allApplications
+        .where(
+            (app) => app.status.toLowerCase() == _selectedFilter.toLowerCase())
+        .toList();
+  }
+
+  int _countByStatus(String status) {
+    return _allApplications
+        .where((app) => app.status.toLowerCase() == status.toLowerCase())
+        .length;
+  }
+
+  void _showDetailBottomSheet(BuildContext context, _ApplicationItem item) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        final lower = item.status.toLowerCase();
+        final Color statusColor = lower.contains('terima')
+            ? const Color(0xFF059669)
+            : (lower.contains('tolak')
+                ? const Color(0xFFDC2626)
+                : const Color(0xFFD97706));
+        final Color statusBg = lower.contains('terima')
+            ? const Color(0xFFECFDF5)
+            : (lower.contains('tolak')
+                ? const Color(0xFFFEE2E2)
+                : const Color(0xFFFEF3C7));
+        final IconData statusIcon = lower.contains('terima')
+            ? Icons.check_circle_rounded
+            : (lower.contains('tolak')
+                ? Icons.cancel_rounded
+                : Icons.schedule_rounded);
+
+        return Container(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE2E8F0),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          item.title,
+                          style: GoogleFonts.sen(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: const Color(0xFF0F172A),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          item.company,
+                          style: GoogleFonts.sen(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF64748B),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: statusBg,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: statusColor.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(statusIcon, size: 14, color: statusColor),
+                        const SizedBox(width: 4),
+                        Text(
+                          item.status,
+                          style: GoogleFonts.sen(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: statusColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              const Divider(color: Color(0xFFF1F5F9)),
+              const SizedBox(height: 12),
+              Text(
+                'Catatan Status',
+                style: GoogleFonts.sen(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFF475569),
+                ),
+              ),
+              const SizedBox(height: 6),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: Text(
+                  item.note,
+                  style: GoogleFonts.sen(
+                    fontSize: 13,
+                    color: const Color(0xFF334155),
+                    height: 1.4,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  const Icon(
+                    Icons.calendar_today_rounded,
+                    size: 14,
+                    color: Color(0xFF94A3B8),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Tanggal Lamaran: ${item.appliedDate}',
+                    style: GoogleFonts.sen(
+                      fontSize: 12,
+                      color: const Color(0xFF64748B),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2373F4),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: Text(
+                    'Tutup',
+                    style: GoogleFonts.sen(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final filtered = _filteredApplications;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: const DashboardTabAppBar(
@@ -510,30 +766,300 @@ class _ApplicationsTab extends StatelessWidget {
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
-        children: const [
-          ApplicationStatusCard(
-            title: 'Backend Engineer Intern',
-            company: 'PT Tokopedia',
-            appliedDate: '17 Oktober 2026',
-            status: 'Seleksi Berkas',
-            note: 'Berkas lamaran sedang ditinjau oleh HR & Tech Lead.',
+        children: [
+          // Header Pelacakan Lamaran Ringkas
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Riwayat Lamaran',
+                style: GoogleFonts.sen(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFF0F172A),
+                ),
+              ),
+              Text(
+                '${_allApplications.length} Total Lamaran',
+                style: GoogleFonts.sen(
+                  fontSize: 12,
+                  color: const Color(0xFF64748B),
+                ),
+              ),
+            ],
           ),
-          SizedBox(height: 12),
-          ApplicationStatusCard(
-            title: 'Frontend Developer Intern',
-            company: 'PT Telkom Indonesia',
-            appliedDate: '15 Oktober 2026',
-            status: 'Wawancara User',
-            note:
-                'Jadwal wawancara teknis: Kamis, 22 Okt 2026 via Google Meet.',
+          const SizedBox(height: 12),
+
+          // Status Summary Cards (Menunggu, Diterima, Ditolak)
+          Row(
+            children: [
+              Expanded(
+                child: _buildSummaryCard(
+                  title: 'Menunggu',
+                  count: _countByStatus('Menunggu'),
+                  icon: Icons.schedule_rounded,
+                  color: const Color(0xFFD97706),
+                  bgColor: const Color(0xFFFEF3C7),
+                  isSelected: _selectedFilter == 'Menunggu',
+                  onTap: () {
+                    setState(() {
+                      _selectedFilter =
+                          _selectedFilter == 'Menunggu' ? 'Semua' : 'Menunggu';
+                    });
+                  },
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildSummaryCard(
+                  title: 'Diterima',
+                  count: _countByStatus('Diterima'),
+                  icon: Icons.check_circle_rounded,
+                  color: const Color(0xFF059669),
+                  bgColor: const Color(0xFFECFDF5),
+                  isSelected: _selectedFilter == 'Diterima',
+                  onTap: () {
+                    setState(() {
+                      _selectedFilter =
+                          _selectedFilter == 'Diterima' ? 'Semua' : 'Diterima';
+                    });
+                  },
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildSummaryCard(
+                  title: 'Ditolak',
+                  count: _countByStatus('Ditolak'),
+                  icon: Icons.cancel_rounded,
+                  color: const Color(0xFFDC2626),
+                  bgColor: const Color(0xFFFEE2E2),
+                  isSelected: _selectedFilter == 'Ditolak',
+                  onTap: () {
+                    setState(() {
+                      _selectedFilter =
+                          _selectedFilter == 'Ditolak' ? 'Semua' : 'Ditolak';
+                    });
+                  },
+                ),
+              ),
+            ],
           ),
-          SizedBox(height: 12),
-          ApplicationStatusCard(
-            title: 'Mobile App Developer Apprentice',
-            company: 'Shopee Indonesia',
-            appliedDate: '10 Oktober 2026',
-            status: 'Diterima Magang',
-            note: 'Selamat! Cek email untuk penawaran offering letter.',
+          const SizedBox(height: 16),
+
+          // Filter Chips
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                _buildFilterChip(
+                  label: 'Semua',
+                  count: _allApplications.length,
+                  isSelected: _selectedFilter == 'Semua',
+                  onTap: () {
+                    setState(() {
+                      _selectedFilter = 'Semua';
+                    });
+                  },
+                ),
+                const SizedBox(width: 8),
+                _buildFilterChip(
+                  label: 'Menunggu',
+                  count: _countByStatus('Menunggu'),
+                  isSelected: _selectedFilter == 'Menunggu',
+                  activeColor: const Color(0xFFD97706),
+                  onTap: () {
+                    setState(() {
+                      _selectedFilter = 'Menunggu';
+                    });
+                  },
+                ),
+                const SizedBox(width: 8),
+                _buildFilterChip(
+                  label: 'Diterima',
+                  count: _countByStatus('Diterima'),
+                  isSelected: _selectedFilter == 'Diterima',
+                  activeColor: const Color(0xFF059669),
+                  onTap: () {
+                    setState(() {
+                      _selectedFilter = 'Diterima';
+                    });
+                  },
+                ),
+                const SizedBox(width: 8),
+                _buildFilterChip(
+                  label: 'Ditolak',
+                  count: _countByStatus('Ditolak'),
+                  isSelected: _selectedFilter == 'Ditolak',
+                  activeColor: const Color(0xFFDC2626),
+                  onTap: () {
+                    setState(() {
+                      _selectedFilter = 'Ditolak';
+                    });
+                  },
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Application Cards List
+          if (filtered.isEmpty)
+            _buildEmptyState()
+          else
+            ...filtered.map(
+              (item) => Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: ApplicationStatusCard(
+                  title: item.title,
+                  company: item.company,
+                  appliedDate: item.appliedDate,
+                  status: item.status,
+                  note: item.note,
+                  currentStep: item.currentStep,
+                  onTap: () => _showDetailBottomSheet(context, item),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSummaryCard({
+    required String title,
+    required int count,
+    required IconData icon,
+    required Color color,
+    required Color bgColor,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+          decoration: BoxDecoration(
+            color: isSelected ? bgColor : Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isSelected ? color : const Color(0xFFE2E8F0),
+              width: isSelected ? 1.5 : 1,
+            ),
+          ),
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(icon, size: 14, color: color),
+                  const SizedBox(width: 4),
+                  Text(
+                    title,
+                    style: GoogleFonts.sen(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: isSelected ? color : const Color(0xFF64748B),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                '$count',
+                style: GoogleFonts.sen(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFilterChip({
+    required String label,
+    required int count,
+    required bool isSelected,
+    required VoidCallback onTap,
+    Color activeColor = const Color(0xFF2373F4),
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+          decoration: BoxDecoration(
+            color: isSelected ? activeColor : Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: isSelected ? activeColor : const Color(0xFFE2E8F0),
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                label,
+                style: GoogleFonts.sen(
+                  fontSize: 12,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                  color: isSelected ? Colors.white : const Color(0xFF475569),
+                ),
+              ),
+              const SizedBox(width: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? Colors.white.withValues(alpha: 0.25)
+                      : const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  '$count',
+                  style: GoogleFonts.sen(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: isSelected ? Colors.white : const Color(0xFF64748B),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Container(
+      padding: const EdgeInsets.all(32),
+      alignment: Alignment.center,
+      child: Column(
+        children: [
+          const Icon(
+            Icons.inbox_rounded,
+            size: 48,
+            color: Color(0xFFCBD5E1),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Tidak ada lamaran dengan status "$_selectedFilter"',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.sen(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF64748B),
+            ),
           ),
         ],
       ),
