@@ -6,6 +6,7 @@ import '../features/auth/presentation/pages/login_page.dart';
 import '../features/company/presentation/pages/company_dashboard_page.dart';
 import '../features/dashboard/presentation/pages/dashboard_page.dart';
 import '../features/onboarding/presentation/pages/onboarding_page.dart';
+import '../features/recommendation/presentation/pages/recommendation_processing_page.dart';
 import '../features/splash/presentation/pages/splash_page.dart';
 
 abstract class AppRoutePaths {
@@ -18,6 +19,7 @@ abstract class AppRoutePaths {
   static const String companyDashboard = '/company-dashboard';
   static const String story = '/story';
   static const String recommendation = '/recommendation';
+  static const String recommendationProcessing = '/recommendation/processing';
 }
 
 final GoRouter appRouter = GoRouter(
@@ -67,6 +69,12 @@ final GoRouter appRouter = GoRouter(
         title: 'Recommendation Page',
         path: AppRoutePaths.recommendation,
       ),
+      routes: [
+        GoRoute(
+          path: 'processing',
+          builder: (context, state) => const RecommendationProcessingPage(),
+        ),
+      ],
     ),
   ],
 );
