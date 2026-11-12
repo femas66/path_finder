@@ -45,16 +45,19 @@ class ApplicationStatusCard extends StatelessWidget {
     if (lower.contains('terima') || lower.contains('lolos')) {
       return const Color(0xFF059669); // Emerald
     }
-    if (lower.contains('wawancara') || lower.contains('interview')) {
-      return const Color(0xFF2563EB); // Blue
+    if (lower.contains('tolak') || lower.contains('gagal')) {
+      return const Color(0xFFDC2626); // Red
     }
-    if (lower.contains('berkas') ||
+    if (lower.contains('tunggu') ||
+        lower.contains('menunggu') ||
+        lower.contains('pending') ||
+        lower.contains('berkas') ||
         lower.contains('review') ||
         lower.contains('seleksi')) {
       return const Color(0xFFD97706); // Amber
     }
-    if (lower.contains('tolak') || lower.contains('gagal')) {
-      return const Color(0xFFDC2626); // Red
+    if (lower.contains('wawancara') || lower.contains('interview')) {
+      return const Color(0xFF2563EB); // Blue
     }
     return const Color(0xFF2373F4); // Primary
   }
@@ -65,18 +68,43 @@ class ApplicationStatusCard extends StatelessWidget {
     if (lower.contains('terima') || lower.contains('lolos')) {
       return const Color(0xFFECFDF5);
     }
-    if (lower.contains('wawancara') || lower.contains('interview')) {
-      return const Color(0xFFEFF6FF);
+    if (lower.contains('tolak') || lower.contains('gagal')) {
+      return const Color(0xFFFEE2E2);
     }
-    if (lower.contains('berkas') ||
+    if (lower.contains('tunggu') ||
+        lower.contains('menunggu') ||
+        lower.contains('pending') ||
+        lower.contains('berkas') ||
         lower.contains('review') ||
         lower.contains('seleksi')) {
       return const Color(0xFFFEF3C7);
     }
-    if (lower.contains('tolak') || lower.contains('gagal')) {
-      return const Color(0xFFFEE2E2);
+    if (lower.contains('wawancara') || lower.contains('interview')) {
+      return const Color(0xFFEFF6FF);
     }
     return const Color(0xFFF0F5FA);
+  }
+
+  IconData _resolveStatusIcon() {
+    final lower = status.toLowerCase();
+    if (lower.contains('terima') || lower.contains('lolos')) {
+      return Icons.check_circle_rounded;
+    }
+    if (lower.contains('tolak') || lower.contains('gagal')) {
+      return Icons.cancel_rounded;
+    }
+    if (lower.contains('tunggu') ||
+        lower.contains('menunggu') ||
+        lower.contains('pending') ||
+        lower.contains('berkas') ||
+        lower.contains('review') ||
+        lower.contains('seleksi')) {
+      return Icons.schedule_rounded;
+    }
+    if (lower.contains('wawancara') || lower.contains('interview')) {
+      return Icons.videocam_rounded;
+    }
+    return Icons.info_rounded;
   }
 
   int _resolveCurrentStep() {
@@ -86,15 +114,25 @@ class ApplicationStatusCard extends StatelessWidget {
     if (lower.contains('wawancara') || lower.contains('interview')) return 3;
     if (lower.contains('berkas') ||
         lower.contains('review') ||
-        lower.contains('seleksi')) {
+        lower.contains('seleksi') ||
+        lower.contains('tunggu') ||
+        lower.contains('menunggu')) {
       return 2;
     }
+    if (lower.contains('tolak') || lower.contains('gagal')) return 1;
     return 1;
   }
 
   String _getStepLabel(int step) {
+    final lower = status.toLowerCase();
+    if (lower.contains('tolak') || lower.contains('gagal')) {
+      return 'Lamaran Ditolak';
+    }
     switch (step) {
       case 1:
+        if (lower.contains('tunggu') || lower.contains('menunggu')) {
+          return 'Menunggu Peninjauan';
+        }
         return 'Terkirim';
       case 2:
         return 'Seleksi Berkas';
@@ -242,13 +280,10 @@ class ApplicationStatusCard extends StatelessWidget {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Container(
-                                width: 5,
-                                height: 5,
-                                decoration: BoxDecoration(
-                                  color: resolvedColor,
-                                  shape: BoxShape.circle,
-                                ),
+                              Icon(
+                                _resolveStatusIcon(),
+                                size: 12,
+                                color: resolvedColor,
                               ),
                               const SizedBox(width: 4),
                               Text(
@@ -381,15 +416,12 @@ class ApplicationStatusCard extends StatelessWidget {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Container(
-                                width: 6,
-                                height: 6,
-                                decoration: BoxDecoration(
-                                  color: resolvedColor,
-                                  shape: BoxShape.circle,
-                                ),
+                              Icon(
+                                _resolveStatusIcon(),
+                                size: 13,
+                                color: resolvedColor,
                               ),
-                              const SizedBox(width: 5),
+                              const SizedBox(width: 4),
                               Text(
                                 status,
                                 style: GoogleFonts.sen(
@@ -470,18 +502,27 @@ class ApplicationStatusCard extends StatelessWidget {
     int total,
     Color accentColor,
   ) {
+    final lower = status.toLowerCase();
+    final isRejected = lower.contains('tolak') || lower.contains('gagal');
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: List.generate(total, (index) {
-            final isCompleted = index < step;
+            final isCompleted = isRejected ? false : index < step;
             return Expanded(
               child: Container(
                 height: 4,
                 margin: EdgeInsets.only(right: index < total - 1 ? 4 : 0),
                 decoration: BoxDecoration(
-                  color: isCompleted ? accentColor : const Color(0xFFE2E8F0),
+                  color: isCompleted
+                      ? accentColor
+                      : (isRejected
+                          ? (index == 0
+                              ? const Color(0xFFDC2626)
+                              : const Color(0xFFE2E8F0))
+                          : const Color(0xFFE2E8F0)),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -501,7 +542,7 @@ class ApplicationStatusCard extends StatelessWidget {
               ),
             ),
             Text(
-              'Tahap $step dari $total',
+              isRejected ? 'Selesai' : 'Tahap $step dari $total',
               style: GoogleFonts.sen(
                 fontSize: 11,
                 color: const Color(0xFF94A3B8),

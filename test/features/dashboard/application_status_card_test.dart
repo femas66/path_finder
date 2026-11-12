@@ -26,47 +26,57 @@ void main() {
         find.textContaining('PT Tokopedia • Dilamar 2 hari lalu'),
         findsOneWidget,
       );
-      expect(find.text('Seleksi Berkas'), findsNWidgets(2)); // Badge + Stepper label
+      expect(
+        find.text('Seleksi Berkas'),
+        findsNWidgets(2),
+      ); // Badge + Stepper label
       expect(find.text('Tahap 2 dari 4'), findsOneWidget);
       expect(find.text('Berkas lamaran sedang ditinjau.'), findsOneWidget);
     });
 
-    testWidgets('renders compact version for Home: thin, simple, no tracker or note', (
-      WidgetTester tester,
-    ) async {
-      var tapped = false;
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: ApplicationStatusCard(
-              title: 'Backend Engineer Intern',
-              company: 'PT Tokopedia',
-              appliedDate: 'Dilamar 2 hari lalu',
-              status: 'Seleksi Berkas',
-              isCompact: true,
-              note: 'Catatan tersembunyi di compact',
-              onTap: () {
-                tapped = true;
-              },
+    testWidgets(
+      'renders compact version for Home: thin, simple, no tracker or note',
+      (WidgetTester tester) async {
+        var tapped = false;
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: ApplicationStatusCard(
+                title: 'Backend Engineer Intern',
+                company: 'PT Tokopedia',
+                appliedDate: 'Dilamar 2 hari lalu',
+                status: 'Seleksi Berkas',
+                isCompact: true,
+                note: 'Catatan tersembunyi di compact',
+                onTap: () {
+                  tapped = true;
+                },
+              ),
             ),
           ),
-        ),
-      );
+        );
 
-      expect(find.text('Backend Engineer Intern'), findsOneWidget);
-      expect(
-        find.textContaining('PT Tokopedia • Dilamar 2 hari lalu'),
-        findsOneWidget,
-      );
-      expect(find.text('Seleksi Berkas'), findsOneWidget); // Only badge in compact
-      expect(find.text('Tahap 2 dari 4'), findsNothing); // No tracker
-      expect(find.text('Catatan tersembunyi di compact'), findsNothing); // No note
-      expect(find.byIcon(Icons.chevron_right_rounded), findsOneWidget);
+        expect(find.text('Backend Engineer Intern'), findsOneWidget);
+        expect(
+          find.textContaining('PT Tokopedia • Dilamar 2 hari lalu'),
+          findsOneWidget,
+        );
+        expect(
+          find.text('Seleksi Berkas'),
+          findsOneWidget,
+        ); // Only badge in compact
+        expect(find.text('Tahap 2 dari 4'), findsNothing); // No tracker
+        expect(
+          find.text('Catatan tersembunyi di compact'),
+          findsNothing,
+        ); // No note
+        expect(find.byIcon(Icons.chevron_right_rounded), findsOneWidget);
 
-      await tester.tap(find.byType(ApplicationStatusCard));
-      await tester.pump();
-      expect(tapped, isTrue);
-    });
+        await tester.tap(find.byType(ApplicationStatusCard));
+        await tester.pump();
+        expect(tapped, isTrue);
+      },
+    );
 
     testWidgets('triggers onTap callback when pressed in full mode', (
       WidgetTester tester,
@@ -113,6 +123,51 @@ void main() {
       expect(find.text('Diterima Magang'), findsOneWidget);
       expect(find.text('Tahap 4 dari 4'), findsOneWidget);
       expect(find.text('Keputusan Akhir'), findsOneWidget);
+    });
+
+    testWidgets('renders Menunggu status indicator correctly', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: ApplicationStatusCard(
+              title: 'Backend Engineer Intern',
+              company: 'PT Tokopedia',
+              appliedDate: '17 Oktober 2026',
+              status: 'Menunggu',
+              note: 'Menunggu peninjauan berkas.',
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('Menunggu'), findsOneWidget);
+      expect(find.text('Menunggu peninjauan berkas.'), findsOneWidget);
+      expect(find.byIcon(Icons.schedule_rounded), findsWidgets);
+    });
+
+    testWidgets('renders Ditolak status indicator correctly', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: ApplicationStatusCard(
+              title: 'UI/UX Designer Intern',
+              company: 'Bukalapak',
+              appliedDate: '05 Oktober 2026',
+              status: 'Ditolak',
+              note: 'Kualifikasi belum sesuai.',
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('Ditolak'), findsOneWidget);
+      expect(find.text('Lamaran Ditolak'), findsOneWidget);
+      expect(find.text('Selesai'), findsOneWidget);
+      expect(find.byIcon(Icons.cancel_rounded), findsOneWidget);
     });
   });
 }
