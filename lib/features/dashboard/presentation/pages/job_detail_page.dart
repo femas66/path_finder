@@ -67,6 +67,40 @@ class JobDetailPage extends StatelessWidget {
               ],
             ),
           ),
+          const SizedBox(height: 16),
+          _SectionCard(
+            title: 'Profil Industri',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  job.industryProfile,
+                  style: GoogleFonts.sen(
+                    fontSize: 13,
+                    color: const Color(0xFF334155),
+                    height: 1.55,
+                  ),
+                ),
+                if (job.facilities.isNotEmpty) ...[
+                  const SizedBox(height: 14),
+                  Text(
+                    'Fasilitas',
+                    style: GoogleFonts.sen(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF0F172A),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  for (var i = 0; i < job.facilities.length; i++) ...[
+                    _RequirementRow(text: job.facilities[i]),
+                    if (i < job.facilities.length - 1)
+                      const SizedBox(height: 10),
+                  ],
+                ],
+              ],
+            ),
+          ),
         ],
       ),
     );
