@@ -53,8 +53,63 @@ class JobDetailPage extends StatelessWidget {
               ),
             ),
           ),
+          const SizedBox(height: 16),
+          _SectionCard(
+            title: 'Syarat & Kualifikasi',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (var i = 0; i < job.requirements.length; i++) ...[
+                  _RequirementRow(text: job.requirements[i]),
+                  if (i < job.requirements.length - 1)
+                    const SizedBox(height: 10),
+                ],
+              ],
+            ),
+          ),
         ],
       ),
+    );
+  }
+}
+
+/// Satu baris syarat/kualifikasi dengan ikon centang.
+class _RequirementRow extends StatelessWidget {
+  const _RequirementRow({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 18,
+          height: 18,
+          margin: const EdgeInsets.only(top: 2),
+          decoration: BoxDecoration(
+            color: const Color(0xFF2373F4).withValues(alpha: 0.08),
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(
+            Icons.check_rounded,
+            size: 12,
+            color: Color(0xFF2373F4),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            text,
+            style: GoogleFonts.sen(
+              fontSize: 13,
+              color: const Color(0xFF334155),
+              height: 1.5,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
