@@ -7,6 +7,7 @@ class JobVacancyData {
   static const List<JobVacancy> jobs = [
     JobVacancy(
       title: 'Frontend Developer Intern',
+      category: 'Frontend',
       company: 'PT Telkom Indonesia',
       location: 'Bandung',
       type: 'Magang',
@@ -36,6 +37,7 @@ class JobVacancyData {
     ),
     JobVacancy(
       title: 'Junior Mobile Flutter Engineer',
+      category: 'Mobile',
       company: 'Gojek Tech Academy',
       location: 'Jakarta',
       type: 'Full-time',
@@ -63,6 +65,7 @@ class JobVacancyData {
     ),
     JobVacancy(
       title: 'Backend Node.js / Python Intern',
+      category: 'Backend',
       company: 'Bukalapak',
       location: 'Remote',
       type: 'Magang',
@@ -90,6 +93,7 @@ class JobVacancyData {
     ),
     JobVacancy(
       title: 'UI/UX Product Design Apprentice',
+      category: 'UI/UX',
       company: 'DANA Indonesia',
       location: 'Jakarta (Hybrid)',
       type: 'Magang',
