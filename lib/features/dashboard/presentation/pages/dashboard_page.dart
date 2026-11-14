@@ -4,9 +4,11 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../app/router.dart';
 import '../../data/job_vacancy_data.dart';
+import '../../domain/models/job_vacancy.dart';
 import '../widgets/application_status_card.dart';
 import '../widgets/dashboard_app_bar.dart';
 import '../widgets/dashboard_bottom_navbar.dart';
+import '../widgets/job_filter_sheet.dart';
 import '../widgets/job_vacancy_card.dart';
 
 class DashboardPage extends StatefulWidget {
@@ -282,89 +284,255 @@ class _HomeTab extends StatelessWidget {
 // ---------------------------------------------------------------------------
 // Tab 2: Lowongan (Jobs / Melamar Lowongan & Matching)
 // ---------------------------------------------------------------------------
-class _JobsTab extends StatelessWidget {
+class _JobsTab extends StatefulWidget {
   const _JobsTab();
 
   @override
+  State<_JobsTab> createState() => _JobsTabState();
+}
+
+class _JobsTabState extends State<_JobsTab> {
+  final TextEditingController _searchController = TextEditingController();
+  String _query = '';
+  JobFilterSelection _filter = JobFilterSelection.empty;
+  bool _sortByMatch = false;
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  List<String> get _locationOptions {
+    final cities = JobVacancyData.jobs.map((job) => job.city).toSet().toList()
+      ..sort();
+    return cities;
+  }
+
+  List<String> get _categoryOptions {
+    final categories =
+        JobVacancyData.jobs
+            .map((job) => job.category)
+            .where((category) => category.isNotEmpty)
+            .toSet()
+            .toList()
+          ..sort();
+    return categories;
+  }
+
+  bool _matchesQuery(JobVacancy job) {
+    final query = _query.trim().toLowerCase();
+    if (query.isEmpty) return true;
+    final haystack = [
+      job.title,
+      job.company,
+      job.location,
+      job.category,
+      job.type ?? '',
+    ].join(' ').toLowerCase();
+    return haystack.contains(query);
+  }
+
+  List<JobVacancy> _visibleJobs() {
+    final jobs = JobVacancyData.jobs
+        .where(
+          (job) =>
+              _matchesQuery(job) &&
+              _filter.matchesLocation(job.city) &&
+              _filter.matchesCategory(job.category),
+        )
+        .toList();
+
+    if (_sortByMatch) {
+      jobs.sort((a, b) => (b.matchScore ?? -1).compareTo(a.matchScore ?? -1));
+    }
+    return jobs;
+  }
+
+  int _countFor(JobFilterSelection selection) {
+    return JobVacancyData.jobs
+        .where(
+          (job) =>
+              _matchesQuery(job) &&
+              selection.matchesLocation(job.city) &&
+              selection.matchesCategory(job.category),
+        )
+        .length;
+  }
+
+  Future<void> _openFilterSheet() async {
+    final selection = await JobFilterSheet.show(
+      context,
+      locationOptions: _locationOptions,
+      categoryOptions: _categoryOptions,
+      initialSelection: _filter,
+      resultCountBuilder: _countFor,
+    );
+
+    if (selection == null || !mounted) return;
+    setState(() {
+      _filter = selection;
+    });
+  }
+
+  void _resetAll() {
+    FocusScope.of(context).unfocus();
+    _searchController.clear();
+    setState(() {
+      _query = '';
+      _filter = JobFilterSelection.empty;
+      _sortByMatch = false;
+    });
+  }
+
+  void _toggleCategory(String category) {
+    setState(() {
+      _filter = _filter.categories.contains(category)
+          ? _filter.withoutCategory(category)
+          : JobFilterSelection(
+              locations: _filter.locations,
+              categories: {..._filter.categories, category},
+            );
+    });
+  }
+
+  void _applyJob(JobVacancy job) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Lamaran terkirim untuk ${job.title}!'),
+        backgroundColor: const Color(0xFF2373F4),
+      ),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final jobs = _visibleJobs();
+    final hasFilter = !_filter.isEmpty;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
-      appBar: const DashboardTabAppBar(
+      appBar: DashboardTabAppBar(
         title: 'Daftar Lowongan IT',
+        actions: [_buildFilterButton(hasFilter), const SizedBox(width: 8)],
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Search Bar
-          TextField(
-            decoration: InputDecoration(
-              hintText: 'Cari posisi, keahlian, atau perusahaan...',
-              hintStyle: GoogleFonts.sen(
-                fontSize: 13,
-                color: const Color(0xFFA0A5BA),
-              ),
-              prefixIcon:
-                  const Icon(Icons.search_rounded, color: Color(0xFFA0A5BA)),
-              filled: true,
-              fillColor: Colors.white,
-              contentPadding: const EdgeInsets.symmetric(vertical: 12),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Filter Tags
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildFilterChip('Semua Lowongan', isSelected: true),
-                const SizedBox(width: 8),
-                _buildFilterChip(
-                  'Rekomendasi Matching (AI)',
-                  isHighlighted: true,
-                ),
-                const SizedBox(width: 8),
-                _buildFilterChip('Frontend'),
-                const SizedBox(width: 8),
-                _buildFilterChip('Backend'),
-                const SizedBox(width: 8),
-                _buildFilterChip('Data Science'),
-                const SizedBox(width: 8),
-                _buildFilterChip('DevOps'),
+                _buildSearchField(),
+                const SizedBox(height: 12),
+                _buildQuickFilters(),
+                if (hasFilter) ...[
+                  const SizedBox(height: 12),
+                  _buildActiveFilters(),
+                ],
+                const SizedBox(height: 14),
+                _buildResultSummary(jobs.length),
               ],
             ),
           ),
-          const SizedBox(height: 16),
+          Expanded(
+            child: jobs.isEmpty
+                ? _buildEmptyState()
+                : ListView.separated(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+                    itemCount: jobs.length,
+                    separatorBuilder: (_, _) => const SizedBox(height: 12),
+                    itemBuilder: (context, index) {
+                      final job = jobs[index];
+                      return JobVacancyCard(
+                        title: job.title,
+                        company: job.company,
+                        location: job.location,
+                        type: job.type,
+                        matchScore: job.matchScore,
+                        description: job.description,
+                        onTap: () =>
+                            context.push(AppRoutePaths.jobDetail, extra: job),
+                        onApply: () => _applyJob(job),
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
 
-          // Jobs List from JobVacancyData
-          ...JobVacancyData.jobs.map(
-            (job) => Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: JobVacancyCard(
-                title: job.title,
-                company: job.company,
-                location: job.location,
-                type: job.type,
-                matchScore: job.matchScore,
-                description: job.description,
-                onTap: () =>
-                    context.push(AppRoutePaths.jobDetail, extra: job),
-                onApply: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Lamaran terkirim untuk ${job.title}!'),
-                      backgroundColor: const Color(0xFF2373F4),
-                    ),
-                  );
+  Widget _buildSearchField() {
+    return TextField(
+      controller: _searchController,
+      onChanged: (value) => setState(() => _query = value),
+      textInputAction: TextInputAction.search,
+      style: GoogleFonts.sen(fontSize: 13, color: const Color(0xFF0F172A)),
+      decoration: InputDecoration(
+        hintText: 'Cari posisi, keahlian, atau perusahaan...',
+        hintStyle: GoogleFonts.sen(
+          fontSize: 13,
+          color: const Color(0xFFA0A5BA),
+        ),
+        prefixIcon: const Icon(Icons.search_rounded, color: Color(0xFFA0A5BA)),
+        suffixIcon: _query.isEmpty
+            ? null
+            : IconButton(
+                onPressed: () {
+                  _searchController.clear();
+                  setState(() => _query = '');
                 },
+                icon: const Icon(Icons.close_rounded, size: 18),
+                color: const Color(0xFF94A3B8),
+                tooltip: 'Hapus pencarian',
+              ),
+        filled: true,
+        fillColor: Colors.white,
+        contentPadding: const EdgeInsets.symmetric(vertical: 12),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFF2373F4), width: 1.4),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickFilters() {
+    final isAll = _filter.isEmpty && !_sortByMatch;
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          _buildFilterChip(
+            'Semua Lowongan',
+            isSelected: isAll,
+            onTap: _resetAll,
+          ),
+          const SizedBox(width: 8),
+          _buildFilterChip(
+            'Rekomendasi Matching (AI)',
+            isHighlighted: true,
+            isSelected: _sortByMatch,
+            onTap: () => setState(() => _sortByMatch = !_sortByMatch),
+          ),
+          ..._categoryOptions.map(
+            (category) => Padding(
+              padding: const EdgeInsets.only(left: 8),
+              child: _buildFilterChip(
+                category,
+                isSelected: _filter.categories.contains(category),
+                onTap: () => _toggleCategory(category),
               ),
             ),
           ),
@@ -373,36 +541,267 @@ class _JobsTab extends StatelessWidget {
     );
   }
 
+  Widget _buildActiveFilters() {
+    final chips = <Widget>[
+      ..._filter.locations.map(
+        (city) => _buildActiveChip(
+          icon: Icons.location_on_outlined,
+          label: city,
+          onRemove: () =>
+              setState(() => _filter = _filter.withoutLocation(city)),
+        ),
+      ),
+      ..._filter.categories.map(
+        (category) => _buildActiveChip(
+          icon: Icons.workspaces_outline,
+          label: category,
+          onRemove: () =>
+              setState(() => _filter = _filter.withoutCategory(category)),
+        ),
+      ),
+    ];
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(child: Wrap(spacing: 8, runSpacing: 8, children: chips)),
+        const SizedBox(width: 4),
+        TextButton(
+          onPressed: () => setState(() => _filter = JobFilterSelection.empty),
+          style: TextButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            minimumSize: Size.zero,
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            foregroundColor: const Color(0xFF64748B),
+            textStyle: GoogleFonts.sen(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          child: const Text('Reset'),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildResultSummary(int count) {
+    final total = JobVacancyData.jobs.length;
+    final isFiltered = _query.trim().isNotEmpty || !_filter.isEmpty;
+
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            isFiltered
+                ? '$count dari $total lowongan'
+                : '$total lowongan tersedia',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.sen(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF64748B),
+            ),
+          ),
+        ),
+        if (_sortByMatch) ...[
+          const SizedBox(width: 8),
+          const Icon(Icons.auto_awesome, size: 12, color: Color(0xFF2373F4)),
+          const SizedBox(width: 4),
+          Flexible(
+            child: Text(
+              'Sesuai kecocokan',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.sen(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF2373F4),
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(24, 40, 24, 24),
+      children: [
+        Center(
+          child: Container(
+            width: 64,
+            height: 64,
+            decoration: BoxDecoration(
+              color: const Color(0xFFF0F5FA),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: const Icon(
+              Icons.search_off_rounded,
+              size: 28,
+              color: Color(0xFF94A3B8),
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Text(
+          'Lowongan tidak ditemukan',
+          textAlign: TextAlign.center,
+          style: GoogleFonts.sen(
+            fontSize: 15,
+            fontWeight: FontWeight.bold,
+            color: const Color(0xFF0F172A),
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          'Coba kata kunci lain atau longgarkan filter lokasi dan divisi.',
+          textAlign: TextAlign.center,
+          style: GoogleFonts.sen(
+            fontSize: 12,
+            height: 1.5,
+            color: const Color(0xFF64748B),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Center(
+          child: OutlinedButton(
+            onPressed: _resetAll,
+            style: OutlinedButton.styleFrom(
+              foregroundColor: const Color(0xFF2373F4),
+              side: const BorderSide(color: Color(0xFFBFDBFE)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              textStyle: GoogleFonts.sen(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            child: const Text('Reset pencarian & filter'),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFilterButton(bool hasFilter) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        IconButton(
+          onPressed: _openFilterSheet,
+          icon: const Icon(Icons.tune_rounded, size: 22),
+          color: hasFilter ? const Color(0xFF2373F4) : const Color(0xFF0F172A),
+          tooltip: 'Filter lowongan',
+        ),
+        if (hasFilter)
+          Positioned(
+            top: 6,
+            right: 4,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+              decoration: BoxDecoration(
+                color: const Color(0xFF2373F4),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.white, width: 1.5),
+              ),
+              child: Text(
+                '${_filter.activeCount}',
+                style: GoogleFonts.sen(
+                  fontSize: 9,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildActiveChip({
+    required IconData icon,
+    required String label,
+    required VoidCallback onRemove,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onRemove,
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          padding: const EdgeInsets.only(left: 10, right: 6, top: 5, bottom: 5),
+          decoration: BoxDecoration(
+            color: const Color(0xFFEFF6FF),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFFBFDBFE)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 12, color: const Color(0xFF2373F4)),
+              const SizedBox(width: 4),
+              Text(
+                label,
+                style: GoogleFonts.sen(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF1D4ED8),
+                ),
+              ),
+              const SizedBox(width: 4),
+              const Icon(
+                Icons.close_rounded,
+                size: 12,
+                color: Color(0xFF2373F4),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildFilterChip(
     String label, {
     bool isSelected = false,
     bool isHighlighted = false,
+    VoidCallback? onTap,
   }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: isSelected
-            ? const Color(0xFF2373F4)
-            : (isHighlighted ? const Color(0xFFECFDF5) : Colors.white),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isSelected
-              ? const Color(0xFF2373F4)
-              : (isHighlighted
-                  ? const Color(0xFF10B981)
-                  : const Color(0xFFE2E8F0)),
-        ),
-      ),
-      child: Text(
-        label,
-        style: GoogleFonts.sen(
-          fontSize: 12,
-          fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-          color: isSelected
-              ? Colors.white
-              : (isHighlighted
-                  ? const Color(0xFF047857)
-                  : const Color(0xFF475569)),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? const Color(0xFF2373F4)
+                : (isHighlighted ? const Color(0xFFECFDF5) : Colors.white),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: isSelected
+                  ? const Color(0xFF2373F4)
+                  : (isHighlighted
+                        ? const Color(0xFF10B981)
+                        : const Color(0xFFE2E8F0)),
+            ),
+          ),
+          child: Text(
+            label,
+            style: GoogleFonts.sen(
+              fontSize: 12,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+              color: isSelected
+                  ? Colors.white
+                  : (isHighlighted
+                        ? const Color(0xFF047857)
+                        : const Color(0xFF475569)),
+            ),
+          ),
         ),
       ),
     );
