@@ -6,11 +6,7 @@ import 'package:path_finder/features/company/presentation/pages/company_dashboar
 void main() {
   group('CompanyDashboardPage', () {
     testWidgets('switches between all 4 tabs seamlessly', (tester) async {
-      await tester.pumpWidget(
-        const MaterialApp(
-          home: CompanyDashboardPage(),
-        ),
-      );
+      await tester.pumpWidget(const MaterialApp(home: CompanyDashboardPage()));
 
       // Tab 0: Ringkasan
       expect(find.text('Lowongan Magang Anda'), findsOneWidget);
@@ -44,20 +40,46 @@ void main() {
       expect(logoutBtn, findsOneWidget);
     });
 
-    testWidgets('AppRoutePaths.companyDashboard route is registered and navigable', (tester) async {
-      expect(AppRoutePaths.companyDashboard, '/company-dashboard');
+    testWidgets(
+      'AppRoutePaths.companyDashboard route is registered and navigable',
+      (tester) async {
+        expect(AppRoutePaths.companyDashboard, '/company-dashboard');
 
+        await tester.pumpWidget(MaterialApp.router(routerConfig: appRouter));
+
+        appRouter.go(AppRoutePaths.companyDashboard);
+        await tester.pumpAndSettle();
+
+        expect(find.byType(CompanyDashboardPage), findsOneWidget);
+        expect(find.text('PT Inovasi Teknologi Nusantara'), findsOneWidget);
+      },
+    );
+
+    testWidgets('editing company profile updates CompanyAppBar name', (
+      tester,
+    ) async {
       await tester.pumpWidget(
-        MaterialApp.router(
-          routerConfig: appRouter,
-        ),
+        const MaterialApp(home: CompanyDashboardPage(initialIndex: 3)),
       );
 
-      appRouter.go(AppRoutePaths.companyDashboard);
+      await tester.tap(find.byKey(const Key('edit_company_profile_button')));
       await tester.pumpAndSettle();
 
-      expect(find.byType(CompanyDashboardPage), findsOneWidget);
-      expect(find.text('PT Inovasi Teknologi Nusantara'), findsOneWidget);
+      await tester.enterText(
+        find.byKey(const Key('company_name_field')),
+        'PT Sinar Karya Digital',
+      );
+      final saveBtn = find.byKey(const Key('save_company_profile_button'));
+      await tester.ensureVisible(saveBtn);
+      await tester.pumpAndSettle();
+      await tester.tap(saveBtn);
+      await tester.pumpAndSettle();
+
+      expect(find.text('PT Sinar Karya Digital'), findsWidgets);
+      expect(
+        find.text('Profil perusahaan berhasil diperbarui'),
+        findsOneWidget,
+      );
     });
   });
 }
