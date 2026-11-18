@@ -95,4 +95,125 @@ void main() {
       expect(await repository.getCurrentSession(), isNull);
     });
   });
+
+  group('AuthRepositoryImpl register (Go backend flow)', () {
+    const registerJsonResponse = {
+      'success': true,
+      'message': 'Registrasi berhasil',
+      'data': {
+        'id': 'usr-registered',
+        'name': 'Budi Santoso',
+        'email': 'budi@example.com',
+        'role': 'mahasiswa',
+      },
+    };
+
+    const loginJsonResponse = {
+      'success': true,
+      'message': 'Login berhasil',
+      'data': {
+        'token': 'jwt_from_auto_login',
+        'user': {
+          'id': 'usr-registered',
+          'name': 'Budi Santoso',
+          'email': 'budi@example.com',
+          'role': 'mahasiswa',
+        },
+      },
+    };
+
+    late List<String> requestedPaths;
+
+    AuthRepositoryImpl buildRepository({
+      required bool loginSucceeds,
+    }) {
+      requestedPaths = <String>[];
+      SharedPreferences.setMockInitialValues({});
+
+      final dio = Dio(BaseOptions(baseUrl: 'http://localhost:3000'));
+      dio.interceptors.add(
+        InterceptorsWrapper(
+          onRequest: (options, handler) {
+            requestedPaths.add(options.path);
+
+            if (options.path.endsWith('/auth/register')) {
+              return handler.resolve(
+                Response(
+                  requestOptions: options,
+                  statusCode: 201,
+                  data: registerJsonResponse,
+                ),
+              );
+            }
+
+            if (!loginSucceeds) {
+              return handler.reject(
+                DioException(
+                  requestOptions: options,
+                  type: DioExceptionType.badResponse,
+                  response: Response(
+                    requestOptions: options,
+                    statusCode: 401,
+                    data: const {
+                      'success': false,
+                      'message': 'email atau password salah',
+                    },
+                  ),
+                ),
+              );
+            }
+
+            return handler.resolve(
+              Response(
+                requestOptions: options,
+                statusCode: 200,
+                data: loginJsonResponse,
+              ),
+            );
+          },
+        ),
+      );
+
+      return AuthRepositoryImpl(
+        remoteSource: AuthRemoteSource(dio),
+        localSource: AuthLocalSource(),
+      );
+    }
+
+    test('register calls /api/auth/register then logs in to build a session',
+        () async {
+      final repository = buildRepository(loginSucceeds: true);
+
+      final session = await repository.register(
+        name: 'Budi Santoso',
+        email: 'budi@example.com',
+        password: 'PasswordAman123',
+        passwordConfirmation: 'PasswordAman123',
+      );
+
+      expect(requestedPaths, equals(['/api/auth/register', '/api/auth/login']));
+      expect(session, isNotNull);
+      expect(session!.token, equals('jwt_from_auto_login'));
+      expect(session.user.email, equals('budi@example.com'));
+
+      // Sesi hasil login otomatis ikut tersimpan.
+      expect(await repository.getToken(), equals('jwt_from_auto_login'));
+    });
+
+    test('register returns null when the account is created but login fails',
+        () async {
+      final repository = buildRepository(loginSucceeds: false);
+
+      final session = await repository.register(
+        name: 'Budi Santoso',
+        email: 'budi@example.com',
+        password: 'PasswordAman123',
+        passwordConfirmation: 'PasswordAman123',
+      );
+
+      expect(requestedPaths, equals(['/api/auth/register', '/api/auth/login']));
+      expect(session, isNull);
+      expect(await repository.getToken(), isNull);
+    });
+  });
 }

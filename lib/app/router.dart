@@ -1,13 +1,15 @@
-import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../features/auth/presentation/pages/forgot_password_page.dart';
 import '../features/auth/presentation/pages/login_page.dart';
+import '../features/auth/presentation/pages/register_page.dart';
 import '../features/company/presentation/pages/company_dashboard_page.dart';
 import '../features/dashboard/presentation/pages/dashboard_page.dart';
 import '../features/onboarding/presentation/pages/onboarding_page.dart';
+import '../features/recommendation/presentation/pages/recommendation_page.dart';
 import '../features/recommendation/presentation/pages/recommendation_processing_page.dart';
 import '../features/splash/presentation/pages/splash_page.dart';
+import '../features/story/presentation/pages/story_page.dart';
 
 abstract class AppRoutePaths {
   static const String splash = '/splash';
@@ -39,10 +41,7 @@ final GoRouter appRouter = GoRouter(
     ),
     GoRoute(
       path: AppRoutePaths.register,
-      builder: (context, state) => const _RoutePlaceholderPage(
-        title: 'Daftar Akun',
-        path: AppRoutePaths.register,
-      ),
+      builder: (context, state) => const RegisterPage(),
     ),
     GoRoute(
       path: AppRoutePaths.forgotPassword,
@@ -58,54 +57,20 @@ final GoRouter appRouter = GoRouter(
     ),
     GoRoute(
       path: AppRoutePaths.story,
-      builder: (context, state) => const _RoutePlaceholderPage(
-        title: 'Story Page',
-        path: AppRoutePaths.story,
-      ),
+      builder: (context, state) => const StoryPage(),
     ),
     GoRoute(
       path: AppRoutePaths.recommendation,
-      builder: (context, state) => const _RoutePlaceholderPage(
-        title: 'Recommendation Page',
-        path: AppRoutePaths.recommendation,
-      ),
+      builder: (context, state) => const RecommendationPage(),
       routes: [
         GoRoute(
           path: 'processing',
-          builder: (context, state) => const RecommendationProcessingPage(),
+          builder: (context, state) => RecommendationProcessingPage(
+            storyId: state.uri.queryParameters['story_id'],
+          ),
         ),
       ],
     ),
   ],
 );
 
-class _RoutePlaceholderPage extends StatelessWidget {
-  const _RoutePlaceholderPage({required this.title, required this.path});
-
-  final String title;
-  final String path;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(title)),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(title, style: Theme.of(context).textTheme.headlineSmall),
-              const SizedBox(height: 8),
-              Text(
-                'Route: $path',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
