@@ -1,8 +1,26 @@
 import '../domain/models/candidate_application.dart';
+import '../domain/models/company_profile.dart';
 import '../domain/models/job_posting.dart';
 
 class CompanyMockData {
   CompanyMockData._();
+
+  static CompanyProfile getInitialCompanyProfile() {
+    return const CompanyProfile(
+      id: 'comp-1',
+      companyName: 'PT Inovasi Teknologi Nusantara',
+      industrySector: 'Software House & Digital Solution',
+      city: 'Bandung',
+      officeAddress: 'Gedung Cyber 2 Lt. 12, Jakarta Selatan',
+      description: 'Perusahaan pengembang perangkat lunak dan solusi digital yang berfokus pada layanan aplikasi mobile, web modern, serta kemitraan talenta digital mahasiswa.',
+      website: 'https://inovasiteknologi.co.id',
+      contactEmail: 'rekrutmen@inovasiteknologi.co.id',
+      contactPhone: '+62 22 4201234',
+      nib: '1234000987654',
+      npwp: '01.234.567.8-428.000',
+      skKemenkumham: 'AHU-0012345.AH.01.01.TAHUN 2022',
+    );
+  }
 
   static List<JobPosting> getInitialJobs() {
     return [
@@ -12,11 +30,10 @@ class CompanyMockData {
         field: 'Software Engineering',
         quota: 3,
         executionPeriod: '1 Januari 2027 s.d. 31 Juli 2027',
-        description:
-            'Mengembangkan fitur aplikasi mobile PathFinder, mengimplementasikan Clean Architecture, dan integrasi API RESTful.',
-        facilities:
-            'Uang saku bulanan kompetitif, laptop kerja MacBook, sertifikat magang resmi, bimbingan mentor 1-on-1.',
-        requiredSkills: 'Flutter, Dart, State Management (Riverpod), Git, REST API',
+        description: 'Mengembangkan fitur aplikasi mobile PathFinder, mengimplementasikan Clean Architecture, dan integrasi API RESTful.',
+        facilities: 'Uang saku bulanan kompetitif, laptop kerja MacBook, sertifikat magang resmi, bimbingan mentor 1-on-1.',
+        requiredSkills:
+            'Flutter, Dart, State Management (Riverpod), Git, REST API',
         companyName: 'PT Inovasi Teknologi Nusantara',
         location: 'Bandung (Hybrid)',
         applicantsCount: 8,
@@ -29,10 +46,8 @@ class CompanyMockData {
         field: 'Web Engineering',
         quota: 2,
         executionPeriod: '1 Februari 2027 s.d. 31 Juli 2027',
-        description:
-            'Membangun antarmuka portal web perusahaan dengan React/Next.js dan Tailwind CSS berstandar industri modern.',
-        facilities:
-            'Uang saku bulanan, sertifikat resmi industri, makan siang gratis, akses coworking space.',
+        description: 'Membangun antarmuka portal web perusahaan dengan React/Next.js dan Tailwind CSS berstandar industri modern.',
+        facilities: 'Uang saku bulanan, sertifikat resmi industri, makan siang gratis, akses coworking space.',
         requiredSkills: 'React, TypeScript, Tailwind CSS, Responsive Design',
         companyName: 'PT Inovasi Teknologi Nusantara',
         location: 'Jakarta Selatan (Onsite)',
@@ -46,10 +61,8 @@ class CompanyMockData {
         field: 'Product & Design',
         quota: 2,
         executionPeriod: '1 Januari 2027 s.d. 30 Juni 2027',
-        description:
-            'Melakukan riset pengguna, wireframing, pembuatan prototype interaktif di Figma, dan usability testing.',
-        facilities:
-            'Uang saku bulanan, langganan Figma Pro, sertifikat resmi, bimbingan langsung Principal Designer.',
+        description: 'Melakukan riset pengguna, wireframing, pembuatan prototype interaktif di Figma, dan usability testing.',
+        facilities: 'Uang saku bulanan, langganan Figma Pro, sertifikat resmi, bimbingan langsung Principal Designer.',
         requiredSkills: 'Figma, Design System, Wireframing, User Research',
         companyName: 'PT Inovasi Teknologi Nusantara',
         location: 'Bandung (Remote)',
@@ -72,7 +85,8 @@ class CompanyMockData {
         appliedDate: '24 Oktober 2026',
         matchScore: 94,
         status: 'Diterima',
-        notes: 'Portofolio Flutter sangat solid, aktif berkontribusi open source.',
+        notes:
+            'Portofolio Flutter sangat solid, aktif berkontribusi open source.',
       ),
       const CandidateApplication(
         id: 'cand-2',

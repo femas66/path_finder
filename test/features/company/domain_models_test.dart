@@ -72,15 +72,37 @@ void main() {
     });
   });
 
+  group('CompanyProfile Model', () {
+    test('instantiates correctly and copyWith updates editable fields', () {
+      final profile = CompanyMockData.getInitialCompanyProfile();
+
+      expect(profile.companyName, 'PT Inovasi Teknologi Nusantara');
+      expect(profile.isVerified, isTrue);
+
+      final updated = profile.copyWith(
+        companyName: 'PT PathFinder Digital Indonesia',
+        city: 'Malang',
+        notifyHighMatch: false,
+      );
+
+      expect(updated.companyName, 'PT PathFinder Digital Indonesia');
+      expect(updated.city, 'Malang');
+      expect(updated.notifyHighMatch, isFalse);
+      expect(updated.nib, profile.nib);
+    });
+  });
+
   group('CompanyMockData', () {
-    test('provides initial jobs and candidates dataset', () {
+    test('provides initial jobs, candidates, and company profile dataset', () {
       final jobs = CompanyMockData.getInitialJobs();
       final candidates = CompanyMockData.getInitialCandidates();
+      final profile = CompanyMockData.getInitialCompanyProfile();
 
       expect(jobs.isNotEmpty, isTrue);
       expect(candidates.isNotEmpty, isTrue);
       expect(jobs.first.title, isNotEmpty);
       expect(candidates.first.candidateName, isNotEmpty);
+      expect(profile.companyName, isNotEmpty);
     });
   });
 }

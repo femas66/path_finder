@@ -4,11 +4,40 @@ import 'package:google_fonts/google_fonts.dart';
 
 import 'package:path_finder/app/router.dart';
 
+import '../../../data/company_mock_data.dart';
+import '../../../domain/models/company_profile.dart';
+import '../forms/edit_company_profile_sheet.dart';
+
 class CompanyProfileTab extends StatelessWidget {
-  const CompanyProfileTab({super.key});
+  const CompanyProfileTab({super.key, this.profile, this.onProfileUpdated});
+
+  final CompanyProfile? profile;
+  final ValueChanged<CompanyProfile>? onProfileUpdated;
+
+  CompanyProfile get _effectiveProfile =>
+      profile ?? CompanyMockData.getInitialCompanyProfile();
+
+  Future<void> _openEditProfile(BuildContext context) async {
+    final current = _effectiveProfile;
+    final updated = await showModalBottomSheet<CompanyProfile>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => EditCompanyProfileSheet(initialProfile: current),
+    );
+
+    if (updated != null) {
+      onProfileUpdated?.call(updated);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final data = _effectiveProfile;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       body: ListView(
@@ -29,75 +58,152 @@ class CompanyProfileTab extends StatelessWidget {
                 ),
               ],
             ),
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                CircleAvatar(
-                  radius: 30,
-                  backgroundColor: const Color(0xFF2373F4)
-                      .withValues(alpha: 0.1),
-                  child: const Icon(
-                    Icons.business_rounded,
-                    size: 34,
-                    color: Color(0xFF2373F4),
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Profil Perusahaan',
-                        style: GoogleFonts.sen(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: const Color(0xFF0F172A),
-                        ),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    CircleAvatar(
+                      radius: 30,
+                      backgroundColor: const Color(0xFF2373F4)
+                          .withValues(alpha: 0.1),
+                      child: const Icon(
+                        Icons.business_rounded,
+                        size: 34,
+                        color: Color(0xFF2373F4),
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'PT Inovasi Teknologi Nusantara',
-                        style: GoogleFonts.sen(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: const Color(0xFF334155),
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Software House & Digital Solution • Bandung',
-                        style: GoogleFonts.sen(
-                          fontSize: 11,
-                          color: const Color(0xFF64748B),
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 2.5,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFECFDF5),
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: const Color(0xFF10B981)),
-                        ),
-                        child: Text(
-                          'Mitra Industri Terverifikasi',
-                          style: GoogleFonts.sen(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                            color: const Color(0xFF047857),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Profil Perusahaan',
+                            style: GoogleFonts.sen(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: const Color(0xFF0F172A),
+                            ),
                           ),
-                        ),
+                          const SizedBox(height: 2),
+                          Text(
+                            data.companyName,
+                            style: GoogleFonts.sen(
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w600,
+                              color: const Color(0xFF334155),
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '${data.industrySector} • ${data.city}',
+                            style: GoogleFonts.sen(
+                              fontSize: 11.5,
+                              color: const Color(0xFF64748B),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          if (data.isVerified)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2.5,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFECFDF5),
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(
+                                  color: const Color(0xFF10B981),
+                                ),
+                              ),
+                              child: Text(
+                                'Mitra Industri Terverifikasi',
+                                style: GoogleFonts.sen(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                  color: const Color(0xFF047857),
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
-                    ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    key: const Key('edit_company_profile_button'),
+                    onPressed: () => _openEditProfile(context),
+                    icon: const Icon(Icons.edit_outlined, size: 17),
+                    label: Text(
+                      'Edit Profil Perusahaan',
+                      style: GoogleFonts.sen(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFF2373F4),
+                      side: const BorderSide(color: Color(0xFF2373F4)),
+                      backgroundColor: const Color(0xFFF0F6FF),
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
+
+          // Informasi Lengkap Perusahaan Card
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Informasi Perusahaan',
+                  style: GoogleFonts.sen(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF0F172A),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  data.description,
+                  style: GoogleFonts.sen(
+                    fontSize: 12,
+                    height: 1.5,
+                    color: const Color(0xFF475569),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                const Divider(color: Color(0xFFE2E8F0), height: 1),
+                const SizedBox(height: 12),
+                _buildInfoRow('Alamat Kantor', data.officeAddress),
+                _buildInfoRow('Email Rekrutmen', data.contactEmail),
+                _buildInfoRow('Nomor Telepon', data.contactPhone),
+                _buildInfoRow(
+                  'Situs Web',
+                  data.website.isEmpty ? '-' : data.website,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
 
           // Menu Items
           _buildMenuTile(
@@ -105,14 +211,14 @@ class CompanyProfileTab extends StatelessWidget {
             icon: Icons.domain_outlined,
             title: 'Detail Legalitas & Profil Perusahaan',
             subtitle: 'NPWP, NIB, dan deskripsi profil perusahaan',
-            onTap: () => _showLegalityModal(context),
+            onTap: () => _showLegalityModal(context, data),
           ),
           _buildMenuTile(
             context: context,
             icon: Icons.notifications_none_rounded,
             title: 'Preferensi Notifikasi Pelamar',
             subtitle: 'Atur email alert saat kandidat baru melamar',
-            onTap: () => _showNotificationPreferencesModal(context),
+            onTap: () => _showNotificationPreferencesModal(context, data),
           ),
 
           const SizedBox(height: 20),
@@ -147,7 +253,7 @@ class CompanyProfileTab extends StatelessWidget {
     );
   }
 
-  void _showLegalityModal(BuildContext context) {
+  void _showLegalityModal(BuildContext context, CompanyProfile data) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -157,7 +263,7 @@ class CompanyProfileTab extends StatelessWidget {
       ),
       builder: (ctx) {
         return SafeArea(
-          child: Padding(
+          child: SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(24, 20, 24, 28),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -193,22 +299,17 @@ class CompanyProfileTab extends StatelessWidget {
                 const SizedBox(height: 16),
                 const Divider(color: Color(0xFFE2E8F0), height: 1),
                 const SizedBox(height: 14),
-                _buildInfoRow('Nama Entitas', 'PT Inovasi Teknologi Nusantara'),
-                _buildInfoRow('NIB (Berusaha)', '1234000987654'),
-                _buildInfoRow('NPWP Perusahaan', '01.234.567.8-428.000'),
+                _buildInfoRow('Nama Entitas', data.companyName),
+                _buildInfoRow('Bidang Industri', data.industrySector),
+                _buildInfoRow('NIB (Berusaha)', data.nib),
+                _buildInfoRow('NPWP Perusahaan', data.npwp),
+                _buildInfoRow('SK Kemenkumham', data.skKemenkumham),
+                _buildInfoRow('Status Verifikasi', data.verificationStatus),
+                _buildInfoRow('Alamat Kantor', data.officeAddress),
                 _buildInfoRow(
-                  'SK Kemenkumham',
-                  'AHU-0012345.AH.01.01.TAHUN 2022',
+                  'Situs Web',
+                  data.website.isEmpty ? '-' : data.website,
                 ),
-                _buildInfoRow(
-                  'Status Verifikasi',
-                  'Terverifikasi Kemendikbudristek',
-                ),
-                _buildInfoRow(
-                  'Alamat Kantor',
-                  'Gedung Cyber 2 Lt. 12, Jakarta Selatan',
-                ),
-                _buildInfoRow('Situs Web', 'https://inovasiteknologi.co.id'),
                 const SizedBox(height: 16),
                 SizedBox(
                   width: double.infinity,
@@ -228,7 +329,13 @@ class CompanyProfileTab extends StatelessWidget {
     );
   }
 
-  void _showNotificationPreferencesModal(BuildContext context) {
+  void _showNotificationPreferencesModal(
+    BuildContext context,
+    CompanyProfile data,
+  ) {
+    bool notifyNew = data.notifyNewApplication;
+    bool notifyHigh = data.notifyHighMatch;
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
@@ -236,77 +343,94 @@ class CompanyProfileTab extends StatelessWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (ctx) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(24, 20, 24, 28),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 38,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE2E8F0),
-                      borderRadius: BorderRadius.circular(2),
+        return StatefulBuilder(
+          builder: (ctx, setModalState) {
+            return SafeArea(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(24, 20, 24, 28),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 38,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE2E8F0),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Preferensi Notifikasi',
-                  style: GoogleFonts.sen(
-                    fontSize: 17,
-                    fontWeight: FontWeight.bold,
-                    color: const Color(0xFF0F172A),
-                  ),
-                ),
-                const SizedBox(height: 14),
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: const Icon(
-                    Icons.email_outlined,
-                    color: Color(0xFF2373F4),
-                  ),
-                  title: const Text('Email Lamaran Baru'),
-                  subtitle: const Text(
-                    'Terima notifikasi instan saat ada mahasiswa melamar',
-                  ),
-                  trailing: const Icon(
-                    Icons.check_circle_rounded,
-                    color: Color(0xFF059669),
-                  ),
-                ),
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: const Icon(
-                    Icons.stars_rounded,
-                    color: Color(0xFFF59E0B),
-                  ),
-                  title: const Text('Kandidat Match Tinggi (>90%)'),
-                  subtitle: const Text(
-                    'Prioritas notifikasi saat ada kandidat bintang',
-                  ),
-                  trailing: const Icon(
-                    Icons.check_circle_rounded,
-                    color: Color(0xFF059669),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton(
-                    onPressed: () => Navigator.pop(ctx),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFF2373F4),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Preferensi Notifikasi',
+                      style: GoogleFonts.sen(
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF0F172A),
+                      ),
                     ),
-                    child: const Text('Simpan & Tutup'),
-                  ),
+                    const SizedBox(height: 14),
+                    SwitchListTile(
+                      key: const Key('notify_new_application_switch'),
+                      contentPadding: EdgeInsets.zero,
+                      secondary: const Icon(
+                        Icons.email_outlined,
+                        color: Color(0xFF2373F4),
+                      ),
+                      title: const Text('Email Lamaran Baru'),
+                      subtitle: const Text(
+                        'Terima notifikasi instan saat ada mahasiswa melamar',
+                      ),
+                      activeThumbColor: const Color(0xFF2373F4),
+                      value: notifyNew,
+                      onChanged: (val) {
+                        setModalState(() => notifyNew = val);
+                      },
+                    ),
+                    SwitchListTile(
+                      key: const Key('notify_high_match_switch'),
+                      contentPadding: EdgeInsets.zero,
+                      secondary: const Icon(
+                        Icons.stars_rounded,
+                        color: Color(0xFFF59E0B),
+                      ),
+                      title: const Text('Kandidat Match Tinggi (>90%)'),
+                      subtitle: const Text(
+                        'Prioritas notifikasi saat ada kandidat bintang',
+                      ),
+                      activeThumbColor: const Color(0xFF2373F4),
+                      value: notifyHigh,
+                      onChanged: (val) {
+                        setModalState(() => notifyHigh = val);
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton(
+                        key: const Key('save_notification_pref_button'),
+                        onPressed: () {
+                          onProfileUpdated?.call(
+                            data.copyWith(
+                              notifyNewApplication: notifyNew,
+                              notifyHighMatch: notifyHigh,
+                            ),
+                          );
+                          Navigator.pop(ctx);
+                        },
+                        style: FilledButton.styleFrom(
+                          backgroundColor: const Color(0xFF2373F4),
+                        ),
+                        child: const Text('Simpan & Tutup'),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         );
       },
     );
