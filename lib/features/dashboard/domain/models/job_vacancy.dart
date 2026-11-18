@@ -8,6 +8,7 @@ class JobVacancy {
     required this.title,
     required this.company,
     required this.location,
+    this.category = '',
     this.type,
     this.matchScore,
     this.description = '',
@@ -24,6 +25,9 @@ class JobVacancy {
 
   /// Lokasi penempatan, misal "Bandung" atau "Remote".
   final String location;
+
+  /// Divisi / kategori kerja, misal "Frontend", "Backend", "UI/UX".
+  final String category;
 
   /// Jenis pekerjaan, misal "Magang", "Full-time", "Hybrid".
   final String? type;
@@ -42,6 +46,14 @@ class JobVacancy {
 
   /// Fasilitas / benefit yang diberikan.
   final List<String> facilities;
+
+  /// Nama kota tanpa keterangan tambahan, misal "Jakarta (Hybrid)" → "Jakarta".
+  /// Dipakai sebagai opsi filter lokasi.
+  String get city {
+    final index = location.indexOf('(');
+    final base = index == -1 ? location : location.substring(0, index);
+    return base.trim();
+  }
 
   String get initial {
     final clean = company.replaceFirst(RegExp(r'^PT\s+', caseSensitive: false),
