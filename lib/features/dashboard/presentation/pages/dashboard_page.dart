@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../app/router.dart';
+import '../../data/job_vacancy_data.dart';
 import '../widgets/application_status_card.dart';
 import '../widgets/dashboard_app_bar.dart';
 import '../widgets/dashboard_bottom_navbar.dart';
@@ -343,117 +344,29 @@ class _JobsTab extends StatelessWidget {
           ),
           const SizedBox(height: 16),
 
-          // Jobs List with JobVacancyCard
-          JobVacancyCard(
-            title: 'Frontend Developer Intern',
-            company: 'PT Telkom Indonesia',
-            location: 'Bandung',
-            type: 'Magang',
-            matchScore: 94,
-            description:
-                'Membantu pengembangan modul antarmuka aplikasi web dan mobile dengan Flutter & React.',
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content:
-                      Text('Melihat detail lowongan Frontend Developer Intern'),
-                  duration: Duration(seconds: 1),
-                ),
-              );
-            },
-            onApply: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content:
-                      Text('Lamaran terkirim untuk Frontend Developer Intern!'),
-                  backgroundColor: Color(0xFF2373F4),
-                ),
-              );
-            },
-          ),
-          const SizedBox(height: 12),
-          JobVacancyCard(
-            title: 'Junior Mobile Flutter Engineer',
-            company: 'Gojek Tech Academy',
-            location: 'Jakarta',
-            type: 'Full-time',
-            matchScore: 88,
-            description:
-                'Berkontribusi dalam arsitektur aplikasi mobile, state management Riverpod, dan integrasi REST API.',
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text(
-                      'Melihat detail lowongan Junior Mobile Flutter Engineer'),
-                  duration: Duration(seconds: 1),
-                ),
-              );
-            },
-            onApply: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text(
-                      'Lamaran terkirim untuk Junior Mobile Flutter Engineer!'),
-                  backgroundColor: Color(0xFF2373F4),
-                ),
-              );
-            },
-          ),
-          const SizedBox(height: 12),
-          JobVacancyCard(
-            title: 'Backend Node.js / Python Intern',
-            company: 'Bukalapak',
-            location: 'Remote',
-            type: 'Magang',
-            matchScore: 81,
-            description:
-                'Mengembangkan service endpoint microservice dan integrasi machine learning pipeline.',
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text(
-                      'Melihat detail lowongan Backend Node.js / Python Intern'),
-                  duration: Duration(seconds: 1),
-                ),
-              );
-            },
-            onApply: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text(
-                      'Lamaran terkirim untuk Backend Node.js / Python Intern!'),
-                  backgroundColor: Color(0xFF2373F4),
-                ),
-              );
-            },
-          ),
-          const SizedBox(height: 12),
-          JobVacancyCard(
-            title: 'UI/UX Product Design Apprentice',
-            company: 'DANA Indonesia',
-            location: 'Jakarta (Hybrid)',
-            type: 'Magang',
-            matchScore: 75,
-            description:
-                'Merancang user journey, wireframe, dan prototype antarmuka produk finansial digital.',
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text(
-                      'Melihat detail lowongan UI/UX Product Design Apprentice'),
-                  duration: Duration(seconds: 1),
-                ),
-              );
-            },
-            onApply: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text(
-                      'Lamaran terkirim untuk UI/UX Product Design Apprentice!'),
-                  backgroundColor: Color(0xFF2373F4),
-                ),
-              );
-            },
+          // Jobs List from JobVacancyData
+          ...JobVacancyData.jobs.map(
+            (job) => Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: JobVacancyCard(
+                title: job.title,
+                company: job.company,
+                location: job.location,
+                type: job.type,
+                matchScore: job.matchScore,
+                description: job.description,
+                onTap: () =>
+                    context.push(AppRoutePaths.jobDetail, extra: job),
+                onApply: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Lamaran terkirim untuk ${job.title}!'),
+                      backgroundColor: const Color(0xFF2373F4),
+                    ),
+                  );
+                },
+              ),
+            ),
           ),
         ],
       ),
