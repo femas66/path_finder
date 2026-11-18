@@ -1,9 +1,11 @@
+import 'package:path_finder/core/errors/app_exception.dart';
 import 'package:path_finder/features/auth/domain/auth_repository.dart';
 import 'package:path_finder/features/auth/domain/entities/auth_session.dart';
 import 'package:path_finder/features/auth/domain/entities/auth_user.dart';
 import 'auth_local_source.dart';
 import 'auth_remote_source.dart';
 import 'models/login_request.dart';
+import 'models/register_request.dart';
 import 'models/user_model.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
@@ -37,6 +39,32 @@ class AuthRepositoryImpl implements AuthRepository {
     await localSource.setRememberMe(rememberMe);
 
     return data.toEntity();
+  }
+
+  @override
+  Future<AuthSession?> register({
+    required String name,
+    required String email,
+    required String password,
+    required String passwordConfirmation,
+  }) async {
+    final request = RegisterRequest(
+      name: name,
+      email: email,
+      password: password,
+      passwordConfirmation: passwordConfirmation,
+    );
+
+    await remoteSource.register(request);
+
+    // Backend Go tidak menerbitkan token pada register, jadi sesi dibentuk
+    // lewat login otomatis. Bila langkah ini gagal, akun tetap sudah dibuat:
+    // kembalikan `null` agar UI meminta pengguna masuk manual.
+    try {
+      return await login(email: email, password: password);
+    } on AppException {
+      return null;
+    }
   }
 
   @override

@@ -5,7 +5,7 @@ import 'auth_providers.dart';
 
 part 'auth_controller.g.dart';
 
-@riverpod
+@Riverpod(keepAlive: true)
 class AuthController extends _$AuthController {
   @override
   FutureOr<AuthSession?> build() async {
@@ -26,6 +26,35 @@ class AuthController extends _$AuthController {
         email: email,
         password: password,
         rememberMe: rememberMe,
+      );
+    });
+
+    if (state.hasError) {
+      throw state.error!;
+    }
+
+    return state.value;
+  }
+
+  /// Mendaftarkan akun baru lalu langsung membentuk sesi lewat login otomatis.
+  ///
+  /// Mengembalikan `null` bila akun berhasil dibuat tetapi sesi gagal dibuat,
+  /// sehingga UI dapat mengarahkan pengguna ke halaman login terlebih dahulu.
+  Future<AuthSession?> register({
+    required String name,
+    required String email,
+    required String password,
+    required String passwordConfirmation,
+  }) async {
+    state = const AsyncLoading();
+    final repository = ref.read(authRepositoryProvider);
+
+    state = await AsyncValue.guard(() async {
+      return await repository.register(
+        name: name,
+        email: email,
+        password: password,
+        passwordConfirmation: passwordConfirmation,
       );
     });
 

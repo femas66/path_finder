@@ -41,8 +41,21 @@ lib/
     │       └── widgets/splash_logo.dart
     │
     ├── story/
+    │   ├── domain/
+    │   │   ├── entities/user_story.dart
+    │   │   └── story_repository.dart
+    │   ├── data/
+    │   │   ├── story_remote_source.dart
+    │   │   ├── story_repository_impl.dart
+    │   │   └── models/
+    │   │       ├── create_story_request.dart
+    │   │       ├── story_model.dart
+    │   │       └── story_response.dart
     │   └── presentation/
     │       ├── pages/story_page.dart
+    │       ├── providers/
+    │       │   ├── story_providers.dart
+    │       │   └── story_controller.dart
     │       └── widgets/story_input_field.dart
     │
     └── recommendation/
@@ -101,7 +114,15 @@ Kode yang dipakai bersama oleh semua fitur. Tidak boleh bergantung pada folder `
 Layar pembuka. Menunggu beberapa detik (atau pemeriksaan awal), lalu pindah ke `/story`. Hanya punya lapisan `presentation`.
 
 ### `features/story/`
-Fitur **"Ceritakan dirimu"**. Berisi form input cerita user. Tidak punya `data` atau `domain` karena tidak menyimpan apa pun. Saat tombol ditekan, ia memanggil controller milik fitur `recommendation`.
+Fitur **"Cerita Diri"**: form satu halaman berisi textarea narasi bebas user (minat, hobi, pengalaman, cara menyelesaikan masalah). Halaman ini adalah langkah pertama setelah register.
+
+| Lapisan | Isi | Tugas |
+|---|---|---|
+| `domain/` | `user_story.dart`, `story_repository.dart` | Entity murni dan kontrak repository. |
+| `data/` | remote source, repository impl, `models/` | `POST /stories` (butuh Bearer token), mengubah JSON menjadi entity. |
+| `presentation/` | page, widget textarea, providers, controller | Validasi 50–2000 karakter, indikator loading, lalu pindah ke `/recommendation/processing`. |
+
+Setelah cerita terkirim, backend memulai analisis NLP; UI menampilkan `RecommendationProcessingPage`.
 
 ### `features/recommendation/`
 Fitur **"Menampilkan rekomendasi bidang"**. Ini satu-satunya fitur yang berhubungan dengan backend.

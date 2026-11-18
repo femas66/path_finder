@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import '../config/env.dart';
 import 'app_exception.dart';
 
 class ErrorMapper {
@@ -19,19 +20,28 @@ class ErrorMapper {
     );
   }
 
+  /// Alamat backend yang sedang dipakai, ikut ditampilkan pada pesan error
+  /// koneksi supaya penyebabnya bisa langsung dikenali (mis. masih mengarah ke
+  /// `127.0.0.1` padahal jalan di emulator Android).
+  static String get _target => Env.baseUrl;
+
   static AppException fromDioException(DioException dioException) {
     switch (dioException.type) {
       case DioExceptionType.connectionTimeout:
       case DioExceptionType.sendTimeout:
       case DioExceptionType.receiveTimeout:
         return NetworkException(
-          message: 'Koneksi ke server timeout. Silakan periksa jaringan Anda.',
+          message:
+              'Server tidak merespons (timeout) di $_target. '
+              'Pastikan backend sudah berjalan, lalu coba lagi.',
           originalError: dioException,
         );
 
       case DioExceptionType.connectionError:
         return NetworkException(
-          message: 'Gagal terhubung ke backend. Pastikan server Python aktif.',
+          message:
+              'Tidak bisa terhubung ke backend di $_target. '
+              'Jalankan backend (go run ./cmd/web) dan pastikan alamatnya benar.',
           originalError: dioException,
         );
 

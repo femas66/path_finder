@@ -44,6 +44,29 @@ class FakeAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<AuthSession?> register({
+    required String name,
+    required String email,
+    required String password,
+    required String passwordConfirmation,
+  }) async {
+    if (shouldFail) {
+      throw const ValidationException(message: 'Email sudah terdaftar');
+    }
+
+    _currentSession = AuthSession(
+      token: 'jwt_mock_token_registered',
+      user: AuthUser(
+        id: 'usr_registered',
+        name: name,
+        email: email,
+        role: 'mahasiswa',
+      ),
+    );
+    return _currentSession;
+  }
+
+  @override
   Future<String?> getToken() async {
     return _currentSession?.token;
   }

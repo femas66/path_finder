@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../app/router.dart';
-import '../../../../core/errors/app_exception.dart';
+import '../../../../core/errors/error_mapper.dart';
 import '../../data/models/user_model.dart';
 import '../../domain/entities/auth_session.dart';
 import '../providers/auth_controller.dart';
@@ -149,20 +149,16 @@ class _LoginFormState extends ConsumerState<LoginForm> {
           context.go(AppRoutePaths.dashboard);
         }
       }
-    } catch (error) {
+    } catch (error, stackTrace) {
       if (!mounted) return;
 
-      final String message;
-      if (error is AppException) {
-        message = error.message;
-      } else {
-        message = 'email atau password salah';
-      }
+      debugPrint('LoginForm error: $error\n$stackTrace');
+      final exception = ErrorMapper.fromObject(error, stackTrace);
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           backgroundColor: const Color(0xFFDC2626),
-          content: Text(message),
+          content: Text(exception.message),
           behavior: SnackBarBehavior.floating,
         ),
       );

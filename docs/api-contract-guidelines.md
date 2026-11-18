@@ -28,20 +28,18 @@ Instruksi ini wajib dipatuhi saat proyek berkembang dan fitur-fitur baru mulai d
      ```json
      {
        "success": false,
-       "error": {
-         "code": "MACHINE_READABLE_ERROR_CODE",
-         "message": "Pesan deskriptif yang ramah pengguna",
-         "details": null // null atau array objek spesifik error validasi
-       }
+       "message": "Pesan deskriptif yang ramah pengguna",
+       "errors": "Detail teknis atau pesan yang sama dengan message"
      }
      ```
+     > *Catatan:* ini adalah bentuk yang dipakai backend Go saat ini (`model.WebResponse`). Jangan menulis format `error: { code, message, details }` karena tidak dipakai implementasi.
 
 3. **Konvensi Penamaan (Naming Conventions)**
    - **URL Endpoints:** Gunakan kata benda jamak (*plural nouns*), huruf kecil (*lowercase*), dan pemisah strip (*kebab-case*).
-     - *Benar:* `/api/v1/stories`, `/api/v1/auth/forgot-password`, `/api/v1/recommendation-results`
-     - *Salah:* `/api/v1/getStory`, `/api/v1/user_profile`, `/api/v1/createRecommendation`
+     - *Benar:* `/api/stories`, `/api/auth/forgot-password`, `/api/recommendation-results`
+     - *Salah:* `/api/getStory`, `/api/user_profile`, `/api/createRecommendation`
    - **JSON Field Keys:** Gunakan `snake_case` untuk seluruh request body dan response data (contoh: `access_token`, `user_id`, `created_at`, `is_completed`).
-   - **Error Codes:** Gunakan `SCREAMING_SNAKE_CASE` (contoh: `VALIDATION_ERROR`, `USER_NOT_FOUND`, `UNAUTHORIZED`).
+   - **Status Code:** Gunakan status HTTP sebagai penanda jenis error; tidak ada field `error.code` terpisah.
 
 4. **Kaidah Penambahan (Prefer Addition Over Modification)**
    - Jangan pernah menghapus field yang sudah aktif digunakan oleh frontend tanpa masa transisi (*backward compatibility*).
@@ -60,7 +58,7 @@ Periksa apakah endpoint baru termasuk ke dalam modul yang sudah ada atau membutu
 Tentukan:
 - **Judul Sub-fitur & Deskripsi Singkat:** Apa tujuan endpoint ini.
 - **Method HTTP:** `GET` (ambil data), `POST` (buat data / aksi proses), `PUT` / `PATCH` (pembaruan data), `DELETE` (hapus data).
-- **URL Path:** Relative terhadap base URL `/api/v1`.
+- **URL Path:** Relative terhadap base URL `/api`.
 - **Autentikasi:** Jelaskan apakah membutuhkan header `Authorization: Bearer <access_token>` atau `Tidak ada`.
 - **Query Parameters / Headers (Jika ada):** Terutama jika endpoint mendukung *pagination*, *filter*, atau *search*.
 

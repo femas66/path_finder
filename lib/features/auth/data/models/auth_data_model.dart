@@ -11,7 +11,9 @@ class AuthDataModel {
   final UserModel user;
 
   factory AuthDataModel.fromJson(Map<String, dynamic> json) {
-    final token = json['token']?.toString() ?? '';
+    // Kontrak API memakai `access_token`; sebagian response lama memakai
+    // `token`. Keduanya diterima agar client tetap kompatibel.
+    final token = (json['token'] ?? json['access_token'])?.toString() ?? '';
     final userJson = json['user'] as Map<String, dynamic>? ?? {};
     return AuthDataModel(
       token: token,
