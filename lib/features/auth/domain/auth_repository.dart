@@ -36,4 +36,18 @@ abstract class AuthRepository {
   Future<AuthSession?> getCurrentSession();
 
   Future<AuthUser?> validateCurrentSession();
+
+  Future<void> forgotPassword(String email);
+
+  Future<bool> verifyResetCode({
+    required String email,
+    required String code,
+  });
+
+  Future<void> resetPassword({
+    required String email,
+    required String code,
+    required String password,
+    required String confirmPassword,
+  });
 }
