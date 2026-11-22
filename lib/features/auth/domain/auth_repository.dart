@@ -34,4 +34,6 @@ abstract class AuthRepository {
   Future<void> clearSession();
 
   Future<AuthSession?> getCurrentSession();
+
+  Future<AuthUser?> validateCurrentSession();
 }

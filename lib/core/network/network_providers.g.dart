@@ -20,7 +20,7 @@ final class DioClientProvider extends $FunctionalProvider<Dio, Dio, Dio>
         argument: null,
         retry: null,
         name: r'dioClientProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -47,4 +47,4 @@ final class DioClientProvider extends $FunctionalProvider<Dio, Dio, Dio>
   }
 }
 
-String _$dioClientHash() => r'6f7b66a5056ba128e60959b8900cef2cfff65d42';
+String _$dioClientHash() => r'968186b990d720ea58980f3833dfd11f195297c2';

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:dio/dio.dart';
 import '../config/env.dart';
 import 'app_exception.dart';
@@ -47,10 +48,19 @@ class ErrorMapper {
 
       case DioExceptionType.badResponse:
         final statusCode = dioException.response?.statusCode;
-        final responseData = dioException.response?.data;
+        final dynamic rawData = dioException.response?.data;
+        Map? responseData;
+        if (rawData is Map) {
+          responseData = rawData;
+        } else if (rawData is String) {
+          try {
+            final decoded = jsonDecode(rawData);
+            if (decoded is Map) responseData = decoded;
+          } catch (_) {}
+        }
 
         String message = 'Terjadi kesalahan dari server.';
-        if (responseData is Map) {
+        if (responseData != null) {
           if (responseData['message'] != null &&
               responseData['message'].toString().trim().isNotEmpty) {
             message = responseData['message'].toString();
@@ -76,7 +86,10 @@ class ErrorMapper {
           case 401:
           case 403:
             return UnauthorizedException(
-              message: message,
+              message: message.isNotEmpty &&
+                      message != 'Terjadi kesalahan dari server.'
+                  ? message
+                  : 'email atau password salah',
               statusCode: statusCode,
               originalError: dioException,
             );

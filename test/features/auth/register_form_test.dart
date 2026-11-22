@@ -76,6 +76,9 @@ class _FakeAuthRepository implements AuthRepository {
 
   @override
   Future<void> saveUser(AuthUser user) async {}
+
+  @override
+  Future<AuthUser?> validateCurrentSession() async => null;
 }
 
 Widget _buildApp(_FakeAuthRepository repository) {

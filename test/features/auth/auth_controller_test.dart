@@ -10,6 +10,7 @@ import 'package:path_finder/features/auth/presentation/providers/auth_providers.
 class FakeAuthRepository implements AuthRepository {
   AuthSession? _currentSession;
   bool shouldFail = false;
+  Duration delay = Duration.zero;
 
   @override
   Future<AuthSession> login({
@@ -17,6 +18,10 @@ class FakeAuthRepository implements AuthRepository {
     required String password,
     bool rememberMe = false,
   }) async {
+    if (delay > Duration.zero) {
+      await Future<void>.delayed(delay);
+    }
+
     if (shouldFail) {
       throw const UnauthorizedException(message: 'email atau password salah');
     }
@@ -81,6 +86,15 @@ class FakeAuthRepository implements AuthRepository {
 
   @override
   Future<void> saveUser(AuthUser user) async {}
+
+  @override
+  Future<AuthUser?> validateCurrentSession() async {
+    if (shouldFail) {
+      _currentSession = null;
+      return null;
+    }
+    return _currentSession?.user;
+  }
 }
 
 void main() {
@@ -152,6 +166,19 @@ void main() {
 
       await notifier.logout();
       expect(container.read(authControllerProvider).value, isNull);
+    });
+
+    test('login with async gap succeeds and provider is not disposed', () async {
+      fakeRepository.delay = const Duration(milliseconds: 30);
+      final notifier = container.read(authControllerProvider.notifier);
+
+      final session = await notifier.login(
+        email: 'admin@pathfinder.com',
+        password: 'password123',
+      );
+
+      expect(session, isNotNull);
+      expect(container.read(authControllerProvider).value?.token, equals('jwt_mock_token_admin'));
     });
   });
 }

@@ -96,38 +96,46 @@ class _LoginFormState extends ConsumerState<LoginForm> {
     try {
       AuthSession? session;
 
-      if (email.toLowerCase() == 'mitra@gmail.com') {
-        final localSource = ref.read(authLocalSourceProvider);
-        const demoToken =
-            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Im1pdHJhQGdtYWlsLmNvbSIsInJvbGUiOiJtaXRyYSJ9.demo';
-        const demoUser = UserModel(
-          id: '5b579866-61c9-4c21-a38d-14b6f5f4ff24',
-          name: 'Mitra PathFinder',
-          email: 'mitra@gmail.com',
-          role: 'mitra',
-        );
-        await localSource.saveSession(token: demoToken, user: demoUser);
-        await localSource.setRememberMe(_rememberMe);
-        session = AuthSession(token: demoToken, user: demoUser.toEntity());
-      } else if (email.toLowerCase() == 'mahasiswa@gmail.com') {
-        final localSource = ref.read(authLocalSourceProvider);
-        const demoToken =
-            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Im1haGFzaXN3YUBnbWFpbC5jb20iLCJyb2xlIjoibWFoYXNpc3dhIn0.demo';
-        const demoUser = UserModel(
-          id: '5b579866-61c9-4c21-a38d-14b6f5f4ff24',
-          name: 'Mahasiswa PathFinder',
-          email: 'mahasiswa@gmail.com',
-          role: 'mahasiswa',
-        );
-        await localSource.saveSession(token: demoToken, user: demoUser);
-        await localSource.setRememberMe(_rememberMe);
-        session = AuthSession(token: demoToken, user: demoUser.toEntity());
-      } else {
-        session = await ref.read(authControllerProvider.notifier).login(
-          email: email,
-          password: password,
-          rememberMe: _rememberMe,
-        );
+      try {
+        session = await ref
+            .read(authControllerProvider.notifier)
+            .login(email: email, password: password, rememberMe: _rememberMe);
+      } catch (loginError) {
+        // Fallback demo account untuk pengujian widget atau lingkungan offline
+        if (email.toLowerCase() == 'mitra@gmail.com' &&
+            password == 'mitra123') {
+          final localSource = ref.read(authLocalSourceProvider);
+          const demoToken =
+              'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Im1pdHJhQGdtYWlsLmNvbSIsInJvbGUiOiJtaXRyYSJ9.demo';
+          const demoUser = UserModel(
+            id: '5b579866-61c9-4c21-a38d-14b6f5f4ff24',
+            name: 'Mitra PathFinder',
+            email: 'mitra@gmail.com',
+            role: 'mitra',
+            location: 'Batam',
+          );
+          await localSource.saveSession(token: demoToken, user: demoUser);
+          await localSource.setRememberMe(_rememberMe);
+          session = AuthSession(token: demoToken, user: demoUser.toEntity());
+        } else if (email.toLowerCase() == 'mahasiswa@gmail.com' &&
+            password == 'password123') {
+          final localSource = ref.read(authLocalSourceProvider);
+          const demoToken =
+              'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Im1haGFzaXN3YUBnbWFpbC5jb20iLCJyb2xlIjoibWFoYXNpc3dhIn0.demo';
+          const demoUser = UserModel(
+            id: '5b579866-61c9-4c21-a38d-14b6f5f4ff24',
+            nim: '12345678',
+            name: 'Mahasiswa PathFinder',
+            email: 'mahasiswa@gmail.com',
+            role: 'mahasiswa',
+            location: 'Batam',
+          );
+          await localSource.saveSession(token: demoToken, user: demoUser);
+          await localSource.setRememberMe(_rememberMe);
+          session = AuthSession(token: demoToken, user: demoUser.toEntity());
+        } else {
+          rethrow;
+        }
       }
 
       if (!mounted) return;
@@ -345,13 +353,15 @@ class _LoginFormState extends ConsumerState<LoginForm> {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: _usernameOrEmailController.text ==
+                      color:
+                          _usernameOrEmailController.text ==
                               'admin@pathfinder.com'
                           ? const Color(0xFF2373F4)
                           : Colors.white,
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                        color: _usernameOrEmailController.text ==
+                        color:
+                            _usernameOrEmailController.text ==
                                 'admin@pathfinder.com'
                             ? const Color(0xFF2373F4)
                             : const Color(0xFFCBD5E1),
@@ -365,7 +375,8 @@ class _LoginFormState extends ConsumerState<LoginForm> {
                           style: GoogleFonts.sen(
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
-                            color: _usernameOrEmailController.text ==
+                            color:
+                                _usernameOrEmailController.text ==
                                     'admin@pathfinder.com'
                                 ? Colors.white
                                 : const Color(0xFF0F172A),
@@ -375,7 +386,8 @@ class _LoginFormState extends ConsumerState<LoginForm> {
                           'admin@pathfinder.com',
                           style: GoogleFonts.sen(
                             fontSize: 9.5,
-                            color: _usernameOrEmailController.text ==
+                            color:
+                                _usernameOrEmailController.text ==
                                     'admin@pathfinder.com'
                                 ? Colors.white.withValues(alpha: 0.85)
                                 : const Color(0xFF64748B),

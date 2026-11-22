@@ -7,18 +7,18 @@ import 'package:path_finder/features/auth/domain/auth_repository.dart';
 
 part 'auth_providers.g.dart';
 
-@riverpod
+@Riverpod(keepAlive: true)
 AuthLocalSource authLocalSource(Ref ref) {
   return AuthLocalSource();
 }
 
-@riverpod
+@Riverpod(keepAlive: true)
 AuthRemoteSource authRemoteSource(Ref ref) {
   final dio = ref.watch(dioClientProvider);
   return AuthRemoteSource(dio);
 }
 
-@riverpod
+@Riverpod(keepAlive: true)
 AuthRepository authRepository(Ref ref) {
   final remoteSource = ref.watch(authRemoteSourceProvider);
   final localSource = ref.watch(authLocalSourceProvider);
@@ -28,7 +28,7 @@ AuthRepository authRepository(Ref ref) {
   );
 }
 
-@riverpod
+@Riverpod(keepAlive: true)
 Future<String?> authToken(Ref ref) async {
   final repository = ref.watch(authRepositoryProvider);
   return repository.getToken();
