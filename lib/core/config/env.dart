@@ -5,7 +5,10 @@ class Env {
 
   /// Nilai `BASE_URL` dari `--dart-define`, misalnya:
   /// `flutter run --dart-define=BASE_URL=http://192.168.1.10:3000`
-  static const String _overrideBaseUrl = String.fromEnvironment('BASE_URL');
+  static const String _overrideBaseUrl = String.fromEnvironment(
+    'BASE_URL',
+    defaultValue: 'http://192.168.1.107:3000',
+  );
 
   /// Base URL backend Go (`path-finder-backend`).
   ///

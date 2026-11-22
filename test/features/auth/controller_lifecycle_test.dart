@@ -66,6 +66,9 @@ class _SlowAuthRepository implements AuthRepository {
 
   @override
   Future<void> saveUser(AuthUser user) async {}
+
+  @override
+  Future<AuthUser?> validateCurrentSession() async => null;
 }
 
 class _SlowStoryRepository implements StoryRepository {

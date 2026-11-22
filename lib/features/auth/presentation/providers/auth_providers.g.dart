@@ -22,7 +22,7 @@ final class AuthLocalSourceProvider
         argument: null,
         retry: null,
         name: r'authLocalSourceProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -49,7 +49,7 @@ final class AuthLocalSourceProvider
   }
 }
 
-String _$authLocalSourceHash() => r'c3709867adcf1c6567c1eca54384a39b76c490a9';
+String _$authLocalSourceHash() => r'ea47a70b97092c1fda56c1a96deb6f575516b1b3';
 
 @ProviderFor(authRemoteSource)
 final authRemoteSourceProvider = AuthRemoteSourceProvider._();
@@ -68,7 +68,7 @@ final class AuthRemoteSourceProvider
         argument: null,
         retry: null,
         name: r'authRemoteSourceProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -95,7 +95,7 @@ final class AuthRemoteSourceProvider
   }
 }
 
-String _$authRemoteSourceHash() => r'72e392006fd5a75ef1dc6c790f68959e4096707b';
+String _$authRemoteSourceHash() => r'3474361a7f783a37bd0e1965c7e322bba5465bc8';
 
 @ProviderFor(authRepository)
 final authRepositoryProvider = AuthRepositoryProvider._();
@@ -109,7 +109,7 @@ final class AuthRepositoryProvider
         argument: null,
         retry: null,
         name: r'authRepositoryProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -136,7 +136,7 @@ final class AuthRepositoryProvider
   }
 }
 
-String _$authRepositoryHash() => r'b416eadfb74db0c88c21660e6010df8f7a8b2348';
+String _$authRepositoryHash() => r'61d9c25802b82036e8bb3c4db3ed7ecb050905b2';
 
 @ProviderFor(authToken)
 final authTokenProvider = AuthTokenProvider._();
@@ -150,7 +150,7 @@ final class AuthTokenProvider
         argument: null,
         retry: null,
         name: r'authTokenProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -169,4 +169,4 @@ final class AuthTokenProvider
   }
 }
 
-String _$authTokenHash() => r'7c00ac296dd6d5c58de33ffba2c6342ed7dc84cd';
+String _$authTokenHash() => r'49e4cac83834cdbac8ede26f2e47cfd0321a85cd';

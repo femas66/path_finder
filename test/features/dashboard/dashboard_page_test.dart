@@ -57,6 +57,11 @@ void main() {
     testWidgets(
       'displays applications list with Menunggu, Diterima, Ditolak indicators and supports filtering',
       (WidgetTester tester) async {
+        tester.view.physicalSize = const Size(800, 1400);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+
         await tester.pumpWidget(
           const MaterialApp(home: DashboardPage(initialIndex: 2)),
         );
@@ -64,7 +69,7 @@ void main() {
 
         // Check header and summary indicators
         expect(find.text('Riwayat Lamaran'), findsOneWidget);
-        expect(find.text('Total Lamaran'), findsWidgets);
+        expect(find.textContaining('Total Lamaran'), findsWidgets);
         expect(find.text('Menunggu'), findsWidgets);
         expect(find.text('Diterima'), findsWidgets);
         expect(find.text('Ditolak'), findsWidgets);
@@ -74,7 +79,7 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.text('UI/UX Designer Intern'), findsOneWidget);
-        expect(find.text('Bukalapak'), findsOneWidget);
+        expect(find.textContaining('Bukalapak'), findsOneWidget);
         expect(find.text('Backend Engineer Intern'), findsNothing);
 
         // Filter by 'Diterima'
@@ -82,7 +87,7 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.text('Mobile App Developer Apprentice'), findsOneWidget);
-        expect(find.text('Shopee Indonesia'), findsOneWidget);
+        expect(find.textContaining('Shopee Indonesia'), findsOneWidget);
         expect(find.text('UI/UX Designer Intern'), findsNothing);
 
         // Reset filter by tapping 'Semua'

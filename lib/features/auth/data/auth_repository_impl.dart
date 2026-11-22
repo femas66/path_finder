@@ -107,4 +107,25 @@ class AuthRepositoryImpl implements AuthRepository {
       user: userModel.toEntity(),
     );
   }
+
+  @override
+  Future<AuthUser?> validateCurrentSession() async {
+    final token = await localSource.getToken();
+    if (token == null || token.isEmpty) {
+      await localSource.clearSession();
+      return null;
+    }
+
+    try {
+      final userModel = await remoteSource.getCurrentUser(token: token);
+      await localSource.saveUser(userModel);
+      return userModel.toEntity();
+    } on UnauthorizedException {
+      await localSource.clearSession();
+      return null;
+    } catch (_) {
+      final cachedUser = await localSource.getUser();
+      return cachedUser?.toEntity();
+    }
+  }
 }

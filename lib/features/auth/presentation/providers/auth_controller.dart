@@ -9,7 +9,7 @@ part 'auth_controller.g.dart';
 class AuthController extends _$AuthController {
   @override
   FutureOr<AuthSession?> build() async {
-    final repository = ref.read(authRepositoryProvider);
+    final repository = ref.watch(authRepositoryProvider);
     return repository.getCurrentSession();
   }
 
@@ -21,13 +21,17 @@ class AuthController extends _$AuthController {
     state = const AsyncLoading();
     final repository = ref.read(authRepositoryProvider);
 
-    state = await AsyncValue.guard(() async {
+    final result = await AsyncValue.guard(() async {
       return await repository.login(
         email: email,
         password: password,
         rememberMe: rememberMe,
       );
     });
+
+    if (!ref.mounted) return null;
+
+    state = result;
 
     if (state.hasError) {
       throw state.error!;
@@ -49,7 +53,7 @@ class AuthController extends _$AuthController {
     state = const AsyncLoading();
     final repository = ref.read(authRepositoryProvider);
 
-    state = await AsyncValue.guard(() async {
+    final result = await AsyncValue.guard(() async {
       return await repository.register(
         name: name,
         email: email,
@@ -57,6 +61,10 @@ class AuthController extends _$AuthController {
         passwordConfirmation: passwordConfirmation,
       );
     });
+
+    if (!ref.mounted) return null;
+
+    state = result;
 
     if (state.hasError) {
       throw state.error!;
@@ -68,9 +76,13 @@ class AuthController extends _$AuthController {
   Future<void> logout() async {
     state = const AsyncLoading();
     final repository = ref.read(authRepositoryProvider);
-    state = await AsyncValue.guard(() async {
+    final result = await AsyncValue.guard(() async {
       await repository.clearSession();
       return null;
     });
+
+    if (!ref.mounted) return;
+
+    state = result;
   }
 }

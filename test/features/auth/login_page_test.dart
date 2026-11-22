@@ -149,5 +149,49 @@ void main() {
         expect(find.text('Company Dashboard Screen'), findsOneWidget);
       },
     );
+
+    testWidgets(
+      'mahasiswa with valid credentials navigates to student dashboard route',
+      (tester) async {
+        final router = GoRouter(
+          initialLocation: AppRoutePaths.login,
+          routes: [
+            GoRoute(
+              path: AppRoutePaths.login,
+              builder: (context, state) => const LoginPage(),
+            ),
+            GoRoute(
+              path: AppRoutePaths.companyDashboard,
+              builder: (context, state) =>
+                  const Scaffold(body: Text('Company Dashboard Screen')),
+            ),
+            GoRoute(
+              path: AppRoutePaths.dashboard,
+              builder: (context, state) =>
+                  const Scaffold(body: Text('Student Dashboard Screen')),
+            ),
+          ],
+        );
+
+        await tester.pumpWidget(
+          ProviderScope(
+            child: MaterialApp.router(routerConfig: router),
+          ),
+        );
+
+        // Tap Mahasiswa demo chip
+        await tester.tap(find.text('Mahasiswa'));
+        await tester.pumpAndSettle();
+
+        // Ensure MASUK button is visible then tap
+        final masukBtn = find.text('MASUK');
+        await tester.ensureVisible(masukBtn);
+        await tester.tap(masukBtn);
+        await tester.pump(const Duration(milliseconds: 350));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Student Dashboard Screen'), findsOneWidget);
+      },
+    );
   });
 }
