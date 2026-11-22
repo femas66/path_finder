@@ -79,6 +79,23 @@ class _FakeAuthRepository implements AuthRepository {
 
   @override
   Future<AuthUser?> validateCurrentSession() async => null;
+
+  @override
+  Future<void> forgotPassword(String email) async {}
+
+  @override
+  Future<bool> verifyResetCode({
+    required String email,
+    required String code,
+  }) async => true;
+
+  @override
+  Future<void> resetPassword({
+    required String email,
+    required String code,
+    required String password,
+    required String confirmPassword,
+  }) async {}
 }
 
 Widget _buildApp(_FakeAuthRepository repository) {

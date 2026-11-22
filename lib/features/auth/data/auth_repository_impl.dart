@@ -6,6 +6,9 @@ import 'auth_local_source.dart';
 import 'auth_remote_source.dart';
 import 'models/login_request.dart';
 import 'models/register_request.dart';
+import 'models/forgot_password_request.dart';
+import 'models/verify_reset_code_request.dart';
+import 'models/reset_password_request.dart';
 import 'models/user_model.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
@@ -127,5 +130,36 @@ class AuthRepositoryImpl implements AuthRepository {
       final cachedUser = await localSource.getUser();
       return cachedUser?.toEntity();
     }
+  }
+
+  @override
+  Future<void> forgotPassword(String email) async {
+    final request = ForgotPasswordRequest(email: email);
+    await remoteSource.forgotPassword(request);
+  }
+
+  @override
+  Future<bool> verifyResetCode({
+    required String email,
+    required String code,
+  }) async {
+    final request = VerifyResetCodeRequest(email: email, code: code);
+    return await remoteSource.verifyResetCode(request);
+  }
+
+  @override
+  Future<void> resetPassword({
+    required String email,
+    required String code,
+    required String password,
+    required String confirmPassword,
+  }) async {
+    final request = ResetPasswordRequest(
+      email: email,
+      code: code,
+      password: password,
+      confirmPassword: confirmPassword,
+    );
+    await remoteSource.resetPassword(request);
   }
 }

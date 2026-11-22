@@ -85,4 +85,32 @@ class AuthController extends _$AuthController {
 
     state = result;
   }
+
+  Future<void> forgotPassword(String email) async {
+    final repository = ref.read(authRepositoryProvider);
+    await repository.forgotPassword(email);
+  }
+
+  Future<bool> verifyResetCode({
+    required String email,
+    required String code,
+  }) async {
+    final repository = ref.read(authRepositoryProvider);
+    return await repository.verifyResetCode(email: email, code: code);
+  }
+
+  Future<void> resetPassword({
+    required String email,
+    required String code,
+    required String password,
+    required String confirmPassword,
+  }) async {
+    final repository = ref.read(authRepositoryProvider);
+    await repository.resetPassword(
+      email: email,
+      code: code,
+      password: password,
+      confirmPassword: confirmPassword,
+    );
+  }
 }

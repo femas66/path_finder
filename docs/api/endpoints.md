@@ -130,18 +130,70 @@ Backend mendukung prefiks `/api/auth/*` serta alias `/api/users/*`.
   }
   ```
 
-#### 3. Lupa Password
+#### 3. Lupa Password (Kirim Kode OTP)
 - Method dan Path: `POST /api/auth/forgot-password` (alias `/api/users/forgot-password`)
-- Auth: Publik
+- Auth: Publik (Dilindungi Rate Limiter IP & Cooldown 60s per email untuk mencegah brute-force tebak email)
 - Request Body: `{ "email": "budi@example.com" }`
-- Respons 200 OK: Kode verifikasi dikirimkan (pada tahap development dicetak di log terminal backend).
+- Respons 200 OK:
+  ```json
+  {
+    "success": true,
+    "message": "Kode verifikasi telah dikirim ke email",
+    "data": {
+      "email": "budi@example.com"
+    }
+  }
+  ```
 
-#### 4. Sesi Pengguna Aktif (Get Current User)
+#### 4. Verifikasi Kode OTP Lupa Password
+- Method dan Path: `POST /api/auth/verify-reset-code` (alias `/api/users/verify-reset-code`)
+- Auth: Publik (Maksimal 5 kali percobaan gagal sebelum kode dibatalkan)
+- Request Body:
+  ```json
+  {
+    "email": "budi@example.com",
+    "code": "123456"
+  }
+  ```
+- Respons 200 OK:
+  ```json
+  {
+    "success": true,
+    "message": "Kode verifikasi valid",
+    "data": {
+      "email": "budi@example.com",
+      "valid": true
+    }
+  }
+  ```
+
+#### 5. Reset Password Baru
+- Method dan Path: `POST /api/auth/reset-password` (alias `/api/users/reset-password`)
+- Auth: Publik
+- Request Body:
+  ```json
+  {
+    "email": "budi@example.com",
+    "code": "123456",
+    "password": "passwordBaru123",
+    "confirm_password": "passwordBaru123"
+  }
+  ```
+- Respons 200 OK:
+  ```json
+  {
+    "success": true,
+    "message": "Password berhasil diubah, silakan login dengan password baru",
+    "data": null
+  }
+  ```
+
+#### 6. Sesi Pengguna Aktif (Get Current User)
 - Method dan Path: `GET /api/auth/me` (alias `/api/users/current`, `/api/users/profile`)
 - Auth: Bearer Token
 - Respons 200 OK: Mengembalikan data profil lengkap user pemilik token.
 
-#### 5. Update Token FCM (Push Notification)
+#### 7. Update Token FCM (Push Notification)
 - Method dan Path: `PATCH /api/users/fcm-token`
 - Auth: Bearer Token
 - Request Body: `{ "fcm_token": "token_fcm_dari_perangkat..." }`

@@ -8,6 +8,9 @@ import 'models/login_request.dart';
 import 'models/login_response.dart';
 import 'models/register_request.dart';
 import 'models/register_response.dart';
+import 'models/forgot_password_request.dart';
+import 'models/verify_reset_code_request.dart';
+import 'models/reset_password_request.dart';
 import 'models/user_model.dart';
 
 class AuthRemoteSource {
@@ -20,6 +23,15 @@ class AuthRemoteSource {
 
   static const String primaryMePath = '/api/auth/me';
   static const String fallbackMePath = '/api/users/current';
+
+  static const String primaryForgotPasswordPath = '/api/auth/forgot-password';
+  static const String fallbackForgotPasswordPath = '/api/users/forgot-password';
+
+  static const String primaryVerifyResetCodePath = '/api/auth/verify-reset-code';
+  static const String fallbackVerifyResetCodePath = '/api/users/verify-reset-code';
+
+  static const String primaryResetPasswordPath = '/api/auth/reset-password';
+  static const String fallbackResetPasswordPath = '/api/users/reset-password';
 
   /// Menyusun path endpoint dengan tetap mendukung `baseUrl` yang sudah
   /// menyertakan prefix `/api` maupun yang belum.
@@ -231,5 +243,120 @@ class AuthRemoteSource {
       if (decoded is Map<String, dynamic>) return decoded;
     }
     return <String, dynamic>{};
+  }
+
+  Future<void> forgotPassword(ForgotPasswordRequest request) async {
+    Response response;
+    try {
+      response = await _dio.post(
+        primaryForgotPasswordPath,
+        data: request.toJson(),
+      );
+    } on DioException catch (dioError) {
+      if (dioError.response?.statusCode == 404) {
+        try {
+          response = await _dio.post(
+            fallbackForgotPasswordPath,
+            data: request.toJson(),
+          );
+        } on DioException catch (fallbackError) {
+          throw _mapDioError(fallbackError);
+        } catch (e, stackTrace) {
+          if (e is AppException) rethrow;
+          throw ErrorMapper.fromObject(e, stackTrace);
+        }
+      } else {
+        throw _mapDioError(dioError);
+      }
+    } catch (e, stackTrace) {
+      if (e is AppException) rethrow;
+      throw ErrorMapper.fromObject(e, stackTrace);
+    }
+
+    final dataMap = _asMap(response.data);
+    final success = dataMap['success'] as bool? ?? false;
+    if (!success) {
+      throw ValidationException(
+        message: dataMap['message']?.toString() ?? 'Gagal mengirim kode verifikasi.',
+        statusCode: response.statusCode ?? 400,
+      );
+    }
+  }
+
+  Future<bool> verifyResetCode(VerifyResetCodeRequest request) async {
+    Response response;
+    try {
+      response = await _dio.post(
+        primaryVerifyResetCodePath,
+        data: request.toJson(),
+      );
+    } on DioException catch (dioError) {
+      if (dioError.response?.statusCode == 404) {
+        try {
+          response = await _dio.post(
+            fallbackVerifyResetCodePath,
+            data: request.toJson(),
+          );
+        } on DioException catch (fallbackError) {
+          throw _mapDioError(fallbackError);
+        } catch (e, stackTrace) {
+          if (e is AppException) rethrow;
+          throw ErrorMapper.fromObject(e, stackTrace);
+        }
+      } else {
+        throw _mapDioError(dioError);
+      }
+    } catch (e, stackTrace) {
+      if (e is AppException) rethrow;
+      throw ErrorMapper.fromObject(e, stackTrace);
+    }
+
+    final dataMap = _asMap(response.data);
+    final success = dataMap['success'] as bool? ?? false;
+    if (!success) {
+      throw ValidationException(
+        message: dataMap['message']?.toString() ?? 'Kode verifikasi tidak valid.',
+        statusCode: response.statusCode ?? 400,
+      );
+    }
+    return true;
+  }
+
+  Future<void> resetPassword(ResetPasswordRequest request) async {
+    Response response;
+    try {
+      response = await _dio.post(
+        primaryResetPasswordPath,
+        data: request.toJson(),
+      );
+    } on DioException catch (dioError) {
+      if (dioError.response?.statusCode == 404) {
+        try {
+          response = await _dio.post(
+            fallbackResetPasswordPath,
+            data: request.toJson(),
+          );
+        } on DioException catch (fallbackError) {
+          throw _mapDioError(fallbackError);
+        } catch (e, stackTrace) {
+          if (e is AppException) rethrow;
+          throw ErrorMapper.fromObject(e, stackTrace);
+        }
+      } else {
+        throw _mapDioError(dioError);
+      }
+    } catch (e, stackTrace) {
+      if (e is AppException) rethrow;
+      throw ErrorMapper.fromObject(e, stackTrace);
+    }
+
+    final dataMap = _asMap(response.data);
+    final success = dataMap['success'] as bool? ?? false;
+    if (!success) {
+      throw ValidationException(
+        message: dataMap['message']?.toString() ?? 'Gagal memperbarui password.',
+        statusCode: response.statusCode ?? 400,
+      );
+    }
   }
 }
