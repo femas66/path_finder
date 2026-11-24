@@ -1,16 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../domain/models/job_posting.dart';
+import '../../../domain/models/company_job.dart';
 import '../forms/post_job_form.dart';
 
 class PostJobTab extends StatelessWidget {
-  const PostJobTab({
-    super.key,
-    required this.onJobCreated,
-  });
+  const PostJobTab({super.key, required this.onJobCreated});
 
-  final ValueChanged<JobPosting> onJobCreated;
+  final ValueChanged<CompanyJob> onJobCreated;
 
   @override
   Widget build(BuildContext context) {
@@ -95,9 +92,7 @@ class PostJobTab extends StatelessWidget {
                 ),
               ],
             ),
-            child: PostJobForm(
-              onSubmitSuccess: onJobCreated,
-            ),
+            child: PostJobForm(onSubmitSuccess: onJobCreated),
           ),
         ],
       ),

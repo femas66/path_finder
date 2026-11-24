@@ -1,86 +1,100 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:path_finder/features/company/data/company_mock_data.dart';
-import 'package:path_finder/features/company/presentation/widgets/cards/company_job_card.dart';
+import 'package:path_finder/features/auth/presentation/providers/auth_controller.dart';
+import 'package:path_finder/features/company/domain/company_jobs_repository.dart';
+import 'package:path_finder/features/company/presentation/providers/company_jobs_provider.dart';
 import 'package:path_finder/features/company/presentation/widgets/tabs/company_home_tab.dart';
 
+import 'candidates_tab_test.dart' show MitraAuth, NoSession;
+import 'company_jobs_test_support.dart';
+
 void main() {
-  group('CompanyJobCard', () {
-    testWidgets('renders job details and quota correctly', (tester) async {
-      final job = CompanyMockData.getInitialJobs().first;
-
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: CompanyJobCard(
-              job: job,
-            ),
+  Future<void> mount(
+    WidgetTester tester,
+    FakeJobsRepository repo, {
+    bool signedIn = true,
+  }) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          authControllerProvider.overrideWith(
+            signedIn ? MitraAuth.new : NoSession.new,
+          ),
+          companyJobsRepositoryProvider.overrideWithValue(repo),
+        ],
+        child: MaterialApp(
+          home: CompanyHomeTab(
+            onNavigateToPostJob: () {},
+            onNavigateToCandidates: () {},
           ),
         ),
-      );
+      ),
+    );
+  }
 
-      expect(find.text(job.title), findsOneWidget);
-      expect(find.text(job.field), findsOneWidget);
-      expect(find.text('Kuota: ${job.quota} orang'), findsOneWidget);
-      expect(find.textContaining('8 Pelamar'), findsOneWidget);
-      expect(find.text('Aktif'), findsOneWidget);
-    });
+  testWidgets('loading then active jobs; pagination and refresh', (
+    tester,
+  ) async {
+    final repo = FakeJobsRepository()
+      ..pendingList = Completer<CompanyJobsPage>();
+    await mount(tester, repo);
+    await tester.pump();
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    repo.pendingList!.complete(CompanyJobsPage([jobFixture()], 1, true, 2));
+    await tester.pumpAndSettle();
+    repo.pendingList = null;
+    expect(find.text('Lowongan Aktif: 2'), findsOneWidget);
+    expect(find.textContaining('Kuota'), findsNothing);
+    final more = find.text('Muat lebih banyak');
+    await tester.ensureVisible(more);
+    await tester.tap(more);
+    await tester.pumpAndSettle();
+    expect(find.text('Flutter Intern job-2'), findsOneWidget);
+    final refresh = tester.widget<RefreshIndicator>(
+      find.byType(RefreshIndicator),
+    );
+    await refresh.onRefresh();
+    await tester.pumpAndSettle();
+    expect(repo.listCalls, 3);
+    expect(find.text('Flutter Intern job-2'), findsNothing);
   });
-
-  group('CompanyHomeTab', () {
-    testWidgets('renders metrics and navigates to post job and candidates', (tester) async {
-      final jobs = CompanyMockData.getInitialJobs();
-      final candidates = CompanyMockData.getInitialCandidates();
-
-      bool navigatedToPostJob = false;
-      bool navigatedToCandidates = false;
-
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: CompanyHomeTab(
-              jobs: jobs,
-              candidates: candidates,
-              onNavigateToPostJob: () {
-                navigatedToPostJob = true;
-              },
-              onNavigateToCandidates: () {
-                navigatedToCandidates = true;
-              },
-            ),
-          ),
-        ),
-      );
-
-      // Verify Metrics Card titles
-      expect(find.text('Lowongan Aktif'), findsOneWidget);
-      expect(find.text('Total Pelamar'), findsOneWidget);
-      expect(find.text('Diterima'), findsOneWidget);
-
-      // Verify Job Items rendered
-      expect(find.text(jobs.first.title), findsOneWidget);
-
-      // Test quick action "Posting Lowongan Sekarang"
-      final postButton = find.text('Posting Lowongan Baru');
-      expect(postButton, findsOneWidget);
-      await tester.ensureVisible(postButton);
-      await tester.tap(postButton);
-      await tester.pumpAndSettle();
-
-      expect(navigatedToPostJob, isTrue);
-
-      // Test "Lihat Semua" candidates button
-      final seeCandidatesBtn = find.text('Lihat Semua');
-      await tester.scrollUntilVisible(
-        seeCandidatesBtn,
-        200,
-        scrollable: find.byType(Scrollable),
-      );
-      expect(seeCandidatesBtn, findsOneWidget);
-      await tester.tap(seeCandidatesBtn);
-      await tester.pumpAndSettle();
-
-      expect(navigatedToCandidates, isTrue);
-    });
+  testWidgets('empty, error retry, pagination failure retains jobs', (
+    tester,
+  ) async {
+    final repo = FakeJobsRepository()..fail = true;
+    await mount(tester, repo);
+    await tester.pumpAndSettle();
+    expect(find.text('Coba lagi'), findsOneWidget);
+    repo.fail = false;
+    repo.empty = true;
+    await tester.tap(find.text('Coba lagi'));
+    await tester.pumpAndSettle();
+    expect(find.text('Belum ada lowongan aktif.'), findsOneWidget);
+    repo.empty = false;
+    await tester
+        .widget<RefreshIndicator>(find.byType(RefreshIndicator))
+        .onRefresh();
+    await tester.pumpAndSettle();
+    repo.fail = true;
+    await tester.ensureVisible(find.text('Muat lebih banyak'));
+    await tester.tap(find.text('Muat lebih banyak'));
+    await tester.pumpAndSettle();
+    expect(find.text('Flutter Intern job-1'), findsOneWidget);
+    expect(find.text('Coba muat lagi'), findsOneWidget);
+    repo.fail = false;
+    await tester.ensureVisible(find.text('Coba muat lagi'));
+    await tester.tap(find.text('Coba muat lagi'));
+    await tester.pumpAndSettle();
+    expect(find.text('Flutter Intern job-2'), findsOneWidget);
+  });
+  testWidgets('jobs reject missing session', (tester) async {
+    final repo = FakeJobsRepository();
+    await mount(tester, repo, signedIn: false);
+    await tester.pumpAndSettle();
+    expect(repo.listCalls, 0);
+    expect(find.text('Flutter Intern job-1'), findsNothing);
   });
 }

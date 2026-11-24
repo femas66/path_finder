@@ -1,9 +1,11 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../../core/errors/app_exception.dart';
-import '../../../../core/network/network_providers.dart';
+
 import '../../../auth/presentation/providers/auth_controller.dart';
+import '../../../../core/network/network_providers.dart';
 import '../../data/applicants_repository.dart';
+
 import '../../domain/models/candidate_application.dart';
 
 part 'applicants_provider.g.dart';

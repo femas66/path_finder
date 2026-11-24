@@ -4,6 +4,9 @@ import 'package:path_finder/features/auth/presentation/providers/auth_controller
 import 'package:path_finder/features/company/presentation/providers/applicants_provider.dart';
 
 import 'candidates_tab_test.dart' show MitraAuth, FakeRepository;
+import 'company_jobs_test_support.dart';
+
+import 'package:path_finder/features/company/presentation/providers/company_jobs_provider.dart';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path_finder/app/router.dart';
@@ -17,6 +20,9 @@ void main() {
           overrides: [
             authControllerProvider.overrideWith(MitraAuth.new),
             applicantsRepositoryProvider.overrideWithValue(FakeRepository()),
+            companyJobsRepositoryProvider.overrideWithValue(
+              FakeJobsRepository(),
+            ),
           ],
           child: MaterialApp(home: CompanyDashboardPage()),
         ),
@@ -24,7 +30,8 @@ void main() {
 
       // Tab 0: Ringkasan
       expect(find.text('Lowongan Magang Anda'), findsOneWidget);
-      expect(find.text('Lowongan Aktif'), findsOneWidget);
+      await tester.pumpAndSettle();
+      expect(find.text('Lowongan Aktif: 2'), findsOneWidget);
 
       // Switch to Tab 1: Buat Lowongan
       await tester.tap(find.text('Buat Lowongan'));
@@ -64,6 +71,9 @@ void main() {
             overrides: [
               authControllerProvider.overrideWith(MitraAuth.new),
               applicantsRepositoryProvider.overrideWithValue(FakeRepository()),
+              companyJobsRepositoryProvider.overrideWithValue(
+                FakeJobsRepository(),
+              ),
             ],
             child: MaterialApp.router(routerConfig: appRouter),
           ),
@@ -85,6 +95,9 @@ void main() {
           overrides: [
             authControllerProvider.overrideWith(MitraAuth.new),
             applicantsRepositoryProvider.overrideWithValue(FakeRepository()),
+            companyJobsRepositoryProvider.overrideWithValue(
+              FakeJobsRepository(),
+            ),
           ],
           child: MaterialApp(home: CompanyDashboardPage(initialIndex: 3)),
         ),
