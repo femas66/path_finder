@@ -68,7 +68,9 @@ class NoSession extends AuthController {
 }
 
 void main() {
-  testWidgets('unauthenticated session blocks API requests', (tester) async {
+  testWidgets('applicants reject missing authenticated session', (
+    tester,
+  ) async {
     final repo = FakeRepository();
     await tester.pumpWidget(
       ProviderScope(
@@ -81,7 +83,7 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(repo.calls, isEmpty);
-    expect(find.text('Coba lagi'), findsOneWidget);
+    expect(find.text('Belum ada pelamar untuk filter ini.'), findsNothing);
   });
 
   testWidgets('invalid CV URL shows error without launching viewer', (

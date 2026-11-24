@@ -1,737 +1,176 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../domain/models/candidate_application.dart';
-import '../../../domain/models/job_posting.dart';
-import '../cards/company_job_card.dart';
+import '../../../../../../core/errors/error_mapper.dart';
+import '../../providers/company_jobs_provider.dart';
 
-class CompanyHomeTab extends StatelessWidget {
+class CompanyHomeTab extends ConsumerWidget {
   const CompanyHomeTab({
     super.key,
-    required this.jobs,
-    required this.candidates,
     required this.onNavigateToPostJob,
     required this.onNavigateToCandidates,
   });
-
-  final List<JobPosting> jobs;
-  final List<CandidateApplication> candidates;
-  final VoidCallback onNavigateToPostJob;
-  final VoidCallback onNavigateToCandidates;
+  final VoidCallback onNavigateToPostJob, onNavigateToCandidates;
 
   @override
-  Widget build(BuildContext context) {
-    final activeJobs = jobs.where((j) => j.isActive).length;
-    final totalApplicants = candidates.length;
-    final acceptedCount = candidates
-        .where((c) => c.status == 'Diterima')
-        .length;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final jobs = ref.watch(companyJobsProvider);
+    Future<void> refresh() async {
+      ref.invalidate(companyJobsProvider);
+      try {
+        await ref.read(companyJobsProvider.future);
+      } catch (_) {
+        /* Error rendered below. */
+      }
+    }
 
+    Widget retry(Object error) => Column(
+      children: [
+        Text(ErrorMapper.fromObject(error).message),
+        OutlinedButton(onPressed: refresh, child: const Text('Coba lagi')),
+      ],
+    );
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
-        children: [
-          // Banner Quick Action: Posting Lowongan
-          _buildQuickActionBanner(context),
-          const SizedBox(height: 20),
-
-          // Statistik Cards Row
-          Row(
-            children: [
-              Expanded(
-                child: _buildMetricCard(
-                  label: 'Lowongan Aktif',
-                  value: '$activeJobs',
-                  icon: Icons.work_outline_rounded,
-                  iconColor: const Color(0xFF2373F4),
-                  bgColor: const Color(0xFF2373F4).withValues(alpha: 0.08),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _buildMetricCard(
-                  label: 'Total Pelamar',
-                  value: '$totalApplicants',
-                  icon: Icons.people_outline_rounded,
-                  iconColor: const Color(0xFF10B981),
-                  bgColor: const Color(0xFF10B981).withValues(alpha: 0.08),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _buildMetricCard(
-                  label: 'Diterima',
-                  value: '$acceptedCount',
-                  icon: Icons.check_circle_outline_rounded,
-                  iconColor: const Color(0xFF059669),
-                  bgColor: const Color(0xFF10B981).withValues(alpha: 0.08),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-
-          // Header Section: Lowongan yang Dibuka
-          _buildSectionHeader(
-            title: 'Lowongan Magang Anda',
-            actionText: 'Buat Baru',
-            onAction: onNavigateToPostJob,
-          ),
-          const SizedBox(height: 12),
-
-          if (jobs.isEmpty)
-            _buildEmptyState(
-              icon: Icons.work_off_outlined,
-              message: 'Belum ada lowongan yang diposting.',
-              buttonText: 'Posting Sekarang',
-              onButtonPressed: onNavigateToPostJob,
-            )
-          else
-            ...jobs.map(
-              (job) => CompanyJobCard(
-                job: job,
-                onTap: () => _showJobDetailBottomSheet(context, job),
-              ),
-            ),
-
-          const SizedBox(height: 20),
-
-          // Header Section: Kandidat Masuk Terkini
-          _buildSectionHeader(
-            title: 'Kandidat Masuk Terkini',
-            actionText: 'Lihat Semua',
-            onAction: onNavigateToCandidates,
-          ),
-          const SizedBox(height: 12),
-
-          if (candidates.isEmpty)
-            _buildEmptyState(
-              icon: Icons.person_search_outlined,
-              message: 'Belum ada kandidat yang melamar.',
-            )
-          else
-            ...candidates.take(2).map((cand) => _buildQuickCandidateTile(cand)),
-        ],
-      ),
-    );
-  }
-
-  void _showJobDetailBottomSheet(BuildContext context, JobPosting job) {
-    final skillList = job.requiredSkills
-        .split(',')
-        .map((s) => s.trim())
-        .where((s) => s.isNotEmpty)
-        .toList();
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) {
-        return DraggableScrollableSheet(
-          initialChildSize: 0.75,
-          minChildSize: 0.5,
-          maxChildSize: 0.95,
-          expand: false,
-          builder: (context, scrollController) {
-            return ListView(
-              controller: scrollController,
-              padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
-              children: [
-                // Drag Handle
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE2E8F0),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // Header: Title & Active Badge
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            job.title,
-                            style: GoogleFonts.sen(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: const Color(0xFF0F172A),
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            '${job.companyName} • ${job.location}',
-                            style: GoogleFonts.sen(
-                              fontSize: 12,
-                              color: const Color(0xFF64748B),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: job.isActive
-                            ? const Color(0xFF10B981).withValues(alpha: 0.12)
-                            : const Color(0xFF64748B).withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        job.isActive ? 'Aktif Menerima' : 'Ditutup',
-                        style: GoogleFonts.sen(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: job.isActive
-                              ? const Color(0xFF059669)
-                              : const Color(0xFF64748B),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                const Divider(color: Color(0xFFE2E8F0), height: 1),
-                const SizedBox(height: 16),
-
-                // Info Cards Grid
-                Row(
-                  children: [
-                    Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF8FAFC),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: const Color(0xFFE2E8F0)),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Kuota Peserta',
-                              style: GoogleFonts.sen(
-                                fontSize: 11,
-                                color: const Color(0xFF64748B),
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              '${job.quota} Mahasiswa',
-                              style: GoogleFonts.sen(
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                                color: const Color(0xFF0F172A),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF8FAFC),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: const Color(0xFFE2E8F0)),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Total Pelamar',
-                              style: GoogleFonts.sen(
-                                fontSize: 11,
-                                color: const Color(0xFF64748B),
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              '${job.applicantsCount} Pelamar',
-                              style: GoogleFonts.sen(
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                                color: const Color(0xFF2373F4),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-
-                // Periode
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.event_note_rounded,
-                      size: 16,
-                      color: Color(0xFF64748B),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Periode: ${job.executionPeriod}',
-                        style: GoogleFonts.sen(
-                          fontSize: 12,
-                          color: const Color(0xFF334155),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-
-                // Durasi Seleksi
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.hourglass_bottom_rounded,
-                      size: 16,
-                      color: Color(0xFF64748B),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Durasi Seleksi: ${job.selectionDuration}',
-                        style: GoogleFonts.sen(
-                          fontSize: 12,
-                          color: const Color(0xFF334155),
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 18),
-
-                // Deskripsi
-                Text(
-                  'Deskripsi Pekerjaan',
-                  style: GoogleFonts.sen(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: const Color(0xFF0F172A),
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  job.description,
-                  style: GoogleFonts.sen(
-                    fontSize: 12.5,
-                    color: const Color(0xFF475569),
-                    height: 1.5,
-                  ),
-                ),
-                const SizedBox(height: 18),
-
-                // Required Skills
-                Text(
-                  'Keahlian yang Dibutuhkan',
-                  style: GoogleFonts.sen(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: const Color(0xFF0F172A),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
-                  children: skillList.map((skill) {
-                    return Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 5,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF2373F4).withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(
-                          color: const Color(0xFF2373F4).withValues(alpha: 0.2),
-                        ),
-                      ),
-                      child: Text(
-                        skill,
-                        style: GoogleFonts.sen(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: const Color(0xFF2373F4),
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-                const SizedBox(height: 18),
-
-                // Fasilitas
-                Text(
-                  'Fasilitas & Benefit Magang',
-                  style: GoogleFonts.sen(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: const Color(0xFF0F172A),
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  job.facilities,
-                  style: GoogleFonts.sen(
-                    fontSize: 12.5,
-                    color: const Color(0xFF475569),
-                    height: 1.5,
-                  ),
-                ),
-                const SizedBox(height: 28),
-
-                // Action Buttons
-                FilledButton.icon(
-                  onPressed: () {
-                    Navigator.pop(ctx);
-                    onNavigateToCandidates();
-                  },
-                  icon: const Icon(Icons.people_alt_outlined, size: 18),
-                  label: Text(
-                    'Lihat ${job.applicantsCount} Pelamar Posisi Ini',
-                  ),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFF2373F4),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
-
-  Widget _buildQuickActionBanner(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x04000000),
-            blurRadius: 8,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      body: RefreshIndicator(
+        onRefresh: refresh,
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 3.5,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF2373F4).withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    'REKRUTMEN MAGANG',
-                    style: GoogleFonts.sen(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.5,
-                      color: const Color(0xFF2373F4),
-                    ),
-                  ),
-                ),
-                const Icon(
-                  Icons.stars_rounded,
-                  size: 18,
-                  color: Color(0xFF2373F4),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Text(
-              'Butuh Talenta Mahasiswa Terbaik?',
-              style: GoogleFonts.sen(
-                fontSize: 15,
-                fontWeight: FontWeight.bold,
-                color: const Color(0xFF0F172A),
-                height: 1.3,
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
               ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Posting posisi magang baru dengan kualifikasi spesifik untuk dicocokkan otomatis oleh sistem PathFinder.',
-              style: GoogleFonts.sen(
-                fontSize: 12,
-                color: const Color(0xFF64748B),
-                height: 1.35,
-              ),
-            ),
-            const SizedBox(height: 14),
-            ElevatedButton(
-              onPressed: onNavigateToPostJob,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF2373F4),
-                foregroundColor: Colors.white,
-                elevation: 0,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 9,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.add_rounded, size: 16, color: Colors.white),
-                  const SizedBox(width: 6),
                   Text(
-                    'Posting Lowongan Baru',
+                    'Butuh Talenta Mahasiswa Terbaik?',
                     style: GoogleFonts.sen(
-                      fontSize: 12,
+                      fontSize: 15,
                       fontWeight: FontWeight.bold,
                     ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Buka posisi magang dengan kualifikasi yang dibutuhkan perusahaan Anda.',
+                  ),
+                  const SizedBox(height: 12),
+                  FilledButton.icon(
+                    onPressed: onNavigateToPostJob,
+                    icon: const Icon(Icons.add),
+                    label: const Text('Posting Lowongan Baru'),
                   ),
                 ],
               ),
             ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMetricCard({
-    required String label,
-    required String value,
-    required IconData icon,
-    required Color iconColor,
-    required Color bgColor,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x04000000),
-            blurRadius: 4,
-            offset: Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: bgColor,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, color: iconColor, size: 18),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: GoogleFonts.sen(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: const Color(0xFF0F172A),
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: GoogleFonts.sen(
-              fontSize: 11,
-              color: const Color(0xFF64748B),
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSectionHeader({
-    required String title,
-    required String actionText,
-    required VoidCallback onAction,
-  }) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          title,
-          style: GoogleFonts.sen(
-            fontSize: 15,
-            fontWeight: FontWeight.bold,
-            color: const Color(0xFF0F172A),
-          ),
-        ),
-        InkWell(
-          onTap: onAction,
-          borderRadius: BorderRadius.circular(6),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-            child: Text(
-              actionText,
-              style: GoogleFonts.sen(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: const Color(0xFF2373F4),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildQuickCandidateTile(CandidateApplication cand) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
-      child: Row(
-        children: [
-          CircleAvatar(
-            radius: 20,
-            backgroundColor: const Color(0xFF2373F4).withValues(alpha: 0.1),
-            child: const Icon(
-              Icons.person_rounded,
-              color: Color(0xFF2373F4),
-              size: 20,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  cand.candidateName,
-                  style: GoogleFonts.sen(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    color: const Color(0xFF0F172A),
-                  ),
-                ),
-                Text(
-                  cand.jobTitle,
-                  style: GoogleFonts.sen(
-                    fontSize: 11,
-                    color: const Color(0xFF64748B),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF0F5FA),
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Text(
-              cand.status,
-              style: GoogleFonts.sen(
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
-                color: const Color(0xFF2373F4),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEmptyState({
-    required IconData icon,
-    required String message,
-    String? buttonText,
-    VoidCallback? onButtonPressed,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
-      child: Center(
-        child: Column(
-          children: [
-            Icon(icon, size: 40, color: const Color(0xFFA0A5BA)),
-            const SizedBox(height: 10),
+            const SizedBox(height: 24),
             Text(
-              message,
-              style: GoogleFonts.sen(
-                fontSize: 13,
-                color: const Color(0xFF64748B),
-              ),
-              textAlign: TextAlign.center,
+              'Lowongan Magang Anda',
+              style: GoogleFonts.sen(fontSize: 18, fontWeight: FontWeight.bold),
             ),
-            if (buttonText != null && onButtonPressed != null) ...[
-              const SizedBox(height: 12),
-              OutlinedButton(
-                onPressed: onButtonPressed,
-                style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Color(0xFF2373F4)),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                child: Text(
-                  buttonText,
-                  style: GoogleFonts.sen(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: const Color(0xFF2373F4),
-                  ),
+            const SizedBox(height: 8),
+            jobs.when(
+              skipLoadingOnRefresh: false,
+              loading: () => const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(24),
+                  child: CircularProgressIndicator(),
                 ),
               ),
-            ],
+              error: (error, _) => retry(error),
+              data: (state) => Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text('Lowongan Aktif: ${state.result.total}'),
+                  const SizedBox(height: 12),
+                  if (state.result.items.isEmpty) ...[
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 24),
+                      child: Text(
+                        'Belum ada lowongan aktif.',
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    OutlinedButton(
+                      onPressed: onNavigateToPostJob,
+                      child: const Text('Posting Sekarang'),
+                    ),
+                  ],
+                  for (final job in state.result.items)
+                    Card(
+                      color: Colors.white,
+                      elevation: 0,
+                      margin: const EdgeInsets.only(bottom: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        side: const BorderSide(color: Color(0xFFE2E8F0)),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              job.title,
+                              style: GoogleFonts.sen(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(job.category),
+                            Text(
+                              '${job.company} • ${job.location} • ${job.workType}',
+                            ),
+                            const SizedBox(height: 8),
+                            Text(job.description),
+                            const SizedBox(height: 8),
+                            Wrap(
+                              spacing: 6,
+                              runSpacing: 4,
+                              children: job.requiredSkills
+                                  .map((s) => Chip(label: Text(s)))
+                                  .toList(),
+                            ),
+                            if (job.optionalSkills.isNotEmpty)
+                              Text(
+                                'Keahlian tambahan: ${job.optionalSkills.join(', ')}',
+                              ),
+                            if (job.sourceUrl.isNotEmpty)
+                              SelectableText(job.sourceUrl),
+                          ],
+                        ),
+                      ),
+                    ),
+                  if (state.error != null)
+                    Text(ErrorMapper.fromObject(state.error!).message),
+                  if (state.loadingMore)
+                    const Center(child: CircularProgressIndicator())
+                  else if (state.result.hasMore)
+                    OutlinedButton(
+                      onPressed: () =>
+                          ref.read(companyJobsProvider.notifier).loadMore(),
+                      child: Text(
+                        state.error == null
+                            ? 'Muat lebih banyak'
+                            : 'Coba muat lagi',
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            OutlinedButton.icon(
+              onPressed: onNavigateToCandidates,
+              icon: const Icon(Icons.people_outline),
+              label: const Text('Lihat Semua Pelamar'),
+            ),
           ],
         ),
       ),

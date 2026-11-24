@@ -1,357 +1,148 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:path_finder/features/company/domain/models/job_posting.dart';
+import 'package:path_finder/features/auth/presentation/providers/auth_controller.dart';
+import 'package:path_finder/features/company/domain/models/company_job.dart';
+import 'package:path_finder/features/company/presentation/providers/company_jobs_provider.dart';
 import 'package:path_finder/features/company/presentation/widgets/forms/post_job_form.dart';
 
+import 'candidates_tab_test.dart' show MitraAuth, NoSession;
+import 'company_jobs_test_support.dart';
+
 void main() {
-  group('PostJobForm Widget', () {
-    testWidgets('shows validation errors when submitted with empty fields', (
-      tester,
-    ) async {
-      JobPosting? createdJob;
-
-      await tester.pumpWidget(
-        MaterialApp(
+  Future<void> mount(
+    WidgetTester tester,
+    FakeJobsRepository repo, {
+    ValueChanged<CompanyJob>? created,
+    bool signedIn = true,
+  }) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          authControllerProvider.overrideWith(
+            signedIn ? MitraAuth.new : NoSession.new,
+          ),
+          companyJobsRepositoryProvider.overrideWithValue(repo),
+        ],
+        child: MaterialApp(
           home: Scaffold(
             body: SingleChildScrollView(
-              child: PostJobForm(
-                onSubmitSuccess: (job) {
-                  createdJob = job;
-                },
-              ),
+              child: PostJobForm(onSubmitSuccess: created ?? (_) {}),
             ),
           ),
         ),
-      );
-
-      // Verify labels exist
-      expect(find.text('Judul Posisi'), findsOneWidget);
-      expect(find.text('Bidang'), findsOneWidget);
-      expect(find.text('Kuota Anak Magang'), findsOneWidget);
-      expect(find.text('Tanggal Pelaksanaan'), findsOneWidget);
-      expect(find.text('Deskripsi'), findsOneWidget);
-      expect(find.text('Fasilitas Apa Saja'), findsOneWidget);
-      expect(find.text('Keahlian yang Dibutuhkan'), findsOneWidget);
-
-      // Tap submit button without filling fields
-      final submitButton = find.text('Publikasikan Lowongan');
-      expect(submitButton, findsOneWidget);
-
-      await tester.ensureVisible(submitButton);
-      await tester.tap(submitButton);
-      await tester.pumpAndSettle();
-
-      // Expect validation error messages
-      expect(find.text('Judul posisi wajib diisi'), findsOneWidget);
-      expect(find.text('Bidang pekerjaan wajib diisi'), findsOneWidget);
-      expect(find.text('Masukkan kuota magang yang valid'), findsOneWidget);
-      expect(find.text('Tanggal pelaksanaan wajib diisi'), findsOneWidget);
-      expect(find.text('Deskripsi wajib diisi'), findsOneWidget);
-      expect(find.text('Fasilitas wajib diisi'), findsOneWidget);
-      expect(find.text('Keahlian wajib diisi'), findsOneWidget);
-
-      expect(createdJob, isNull);
-    });
-
-    testWidgets('successfully submits form and returns valid JobPosting', (
-      tester,
-    ) async {
-      JobPosting? createdJob;
-
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: SingleChildScrollView(
-              child: PostJobForm(
-                onSubmitSuccess: (job) {
-                  createdJob = job;
-                },
-              ),
-            ),
-          ),
-        ),
-      );
-
-      // Fill in all 7 fields
-      await tester.enterText(
-        find.widgetWithText(
-          TextFormField,
-          'Contoh: Mobile Flutter Engineer Intern',
-        ),
-        'AI Engineer Intern',
-      );
-      await tester.enterText(
-        find.widgetWithText(TextFormField, 'Contoh: Software Engineering / IT'),
-        'Artificial Intelligence',
-      );
-      await tester.enterText(
-        find.widgetWithText(TextFormField, 'Contoh: 3'),
-        '4',
-      );
-      await tester.enterText(
-        find.widgetWithText(
-          TextFormField,
-          'Contoh: 1 Januari 2027 s.d. 31 Juli 2027',
-        ),
-        '1 Januari 2027 s.d. 31 Juli 2027',
-      );
-      await tester.enterText(
-        find.widgetWithText(
-          TextFormField,
-          'Jelaskan tanggung jawab dan lingkup pekerjaan magang...',
-        ),
-        'Mengembangkan pipeline machine learning dan integrasi LLM.',
-      );
-      await tester.enterText(
-        find.widgetWithText(
-          TextFormField,
-          'Contoh: Uang saku, laptop kerja, sertifikat magang, mentoring...',
-        ),
-        'Uang saku bulanan, sertifikat resmi, bimbingan 1-on-1.',
-      );
-      await tester.enterText(
-        find.widgetWithText(
-          TextFormField,
-          'Contoh: Python, TensorFlow, PyTorch, REST API...',
-        ),
-        'Python, PyTorch, HuggingFace, FastAPI',
-      );
-
-      final submitButton = find.text('Publikasikan Lowongan');
-      await tester.ensureVisible(submitButton);
-      await tester.tap(submitButton);
-
-      // Wait for delayed simulated submission (300ms)
-      await tester.pump(const Duration(milliseconds: 350));
-      await tester.pumpAndSettle();
-
-      expect(createdJob, isNotNull);
-      expect(createdJob!.title, 'AI Engineer Intern');
-      expect(createdJob!.field, 'Artificial Intelligence');
-      expect(createdJob!.quota, 4);
-      expect(createdJob!.executionPeriod, '1 Januari 2027 s.d. 31 Juli 2027');
-      expect(createdJob!.description, contains('machine learning'));
-      expect(createdJob!.facilities, contains('Uang saku bulanan'));
-      expect(createdJob!.requiredSkills, contains('Python, PyTorch'));
-      expect(createdJob!.isActive, isTrue);
-    });
-
-    testWidgets(
-      'shows specific validation errors for invalid input lengths and ranges',
-      (tester) async {
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: SingleChildScrollView(
-                child: PostJobForm(onSubmitSuccess: (job) {}),
-              ),
-            ),
-          ),
-        );
-
-        // Enter too short title
-        await tester.enterText(
-          find.widgetWithText(
-            TextFormField,
-            'Contoh: Mobile Flutter Engineer Intern',
-          ),
-          'AB',
-        );
-        // Enter quota > 100
-        await tester.enterText(
-          find.widgetWithText(TextFormField, 'Contoh: 3'),
-          '150',
-        );
-        // Enter too short description
-        await tester.enterText(
-          find.widgetWithText(
-            TextFormField,
-            'Jelaskan tanggung jawab dan lingkup pekerjaan magang...',
-          ),
-          'Terlalu pendek',
-        );
-
-        final submitButton = find.text('Publikasikan Lowongan');
-        await tester.ensureVisible(submitButton);
-        await tester.tap(submitButton);
-        await tester.pumpAndSettle();
-
-        expect(find.text('Judul posisi minimal 3 karakter'), findsOneWidget);
-        expect(find.text('Kuota magang maksimal 100 orang'), findsOneWidget);
-        expect(
-          find.text(
-            'Deskripsi minimal 15 karakter agar informatif bagi pelamar',
-          ),
-          findsOneWidget,
-        );
-      },
+      ),
     );
+  }
 
-    testWidgets('tapping Gunakan Template Contoh autofills all form fields', (
-      tester,
-    ) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: SingleChildScrollView(
-              child: PostJobForm(onSubmitSuccess: (job) {}),
-            ),
-          ),
-        ),
-      );
+  Future<void> fill(WidgetTester tester) async {
+    for (final entry in {
+      'title': ' Flutter Intern ',
+      'location': 'Bandung',
+      'description': 'Mengembangkan aplikasi mobile bersama tim.',
+      'required_skills': 'Flutter, Dart',
+      'optional_skills': 'Git',
+      'source_url': 'https://example.com/jobs',
+    }.entries) {
+      await tester.enterText(find.byKey(Key(entry.key)), entry.value);
+    }
+    await tester.ensureVisible(find.byKey(const Key('category')));
+    await tester.tap(find.byKey(const Key('category')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text(jobCategories[2]).last);
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const Key('work_type')));
+    await tester.tap(find.byKey(const Key('work_type')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Hybrid').last);
+    await tester.pumpAndSettle();
+  }
 
-      final templateBtn = find.text('Gunakan Template Contoh');
-      expect(templateBtn, findsOneWidget);
-      await tester.tap(templateBtn);
-      await tester.pumpAndSettle();
+  Future<void> submit(WidgetTester tester) async {
+    await tester.ensureVisible(find.text('Publikasikan Lowongan'));
+    await tester.tap(find.text('Publikasikan Lowongan'));
+    await tester.pump();
+  }
 
-      expect(find.text('Mobile Flutter Engineer Intern'), findsOneWidget);
+  testWidgets('empty validation; unsupported fields absent', (tester) async {
+    final repo = FakeJobsRepository();
+    await mount(tester, repo);
+    await submit(tester);
+    expect(find.text('Isi 3–150 karakter'), findsOneWidget);
+    expect(find.text('Isi 20–10000 karakter'), findsOneWidget);
+    expect(find.text('Pilih kategori resmi'), findsOneWidget);
+    expect(find.text('Pilih tipe kerja'), findsOneWidget);
+    expect(find.textContaining('Kuota'), findsNothing);
+    expect(repo.creates, isEmpty);
+  });
+  testWidgets(
+    'pending submit disables duplicates; success uses server result and resets',
+    (tester) async {
+      final repo = FakeJobsRepository()
+        ..pendingCreate = Completer<CompanyJob>();
+      CompanyJob? created;
+      await mount(tester, repo, created: (job) => created = job);
+      await fill(tester);
+      await submit(tester);
+      await tester.pump();
+      expect(find.text('Menyimpan...'), findsOneWidget);
       expect(
-        find.widgetWithText(TextFormField, 'Software Engineering'),
-        findsOneWidget,
+        tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
+        isNull,
       );
-      expect(find.text('3'), findsOneWidget);
-      expect(find.text('1 Januari 2027 s.d. 31 Juli 2027'), findsOneWidget);
-    });
-
-    testWidgets(
-      'kuota field enforces digitsOnly and calendar picker button is present',
-      (tester) async {
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: SingleChildScrollView(
-                child: PostJobForm(onSubmitSuccess: (job) {}),
-              ),
-            ),
-          ),
-        );
-
-        // Verify kuota input only accepts numbers (digitsOnly formatter)
-        final kuotaField = find.widgetWithText(TextFormField, 'Contoh: 3');
-        expect(kuotaField, findsOneWidget);
-        await tester.enterText(kuotaField, 'abc12xyz');
-        expect(find.text('12'), findsOneWidget);
-
-        // Verify calendar button is present with correct icon
-        final calendarIconBtn = find.byIcon(Icons.calendar_month_rounded);
-        expect(calendarIconBtn, findsOneWidget);
-        await tester.tap(calendarIconBtn);
-        await tester.pumpAndSettle();
-
-        // Verify date range picker dialog opened
-        expect(find.byType(DateRangePickerDialog), findsOneWidget);
-      },
-    );
-
-    testWidgets(
-      'renders cleanly on narrow 320px width screens without any RenderFlex overflow',
-      (tester) async {
-        tester.view.physicalSize = const Size(320, 600);
-        tester.view.devicePixelRatio = 1.0;
-        addTearDown(() {
-          tester.view.resetPhysicalSize();
-          tester.view.resetDevicePixelRatio();
-        });
-
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: SingleChildScrollView(
-                child: PostJobForm(onSubmitSuccess: (job) {}),
-              ),
-            ),
-          ),
-        );
-
-        // Expect no overflow exception was caught
-        expect(tester.takeException(), isNull);
-        expect(find.text('Judul Posisi'), findsOneWidget);
-        expect(find.text('Tanggal Pelaksanaan'), findsOneWidget);
-      },
-    );
-
-    testWidgets(
-      'tapping fasilitas suggestion chip appends text and updates selection to end',
-      (tester) async {
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: SingleChildScrollView(
-                child: PostJobForm(onSubmitSuccess: (job) {}),
-              ),
-            ),
-          ),
-        );
-
-        final chipFinder = find.text('+ Uang saku bulanan kompetitif');
-        await tester.scrollUntilVisible(
-          chipFinder,
-          200,
-          scrollable: find.byType(Scrollable).first,
-        );
-        expect(chipFinder, findsOneWidget);
-        await tester.tap(chipFinder);
-        await tester.pumpAndSettle();
-
-        expect(find.text('Uang saku bulanan kompetitif'), findsWidgets);
-
-        final secondChip = find.text('+ Laptop kerja MacBook');
-        await tester.tap(secondChip);
-        await tester.pumpAndSettle();
-
-        expect(
-          find.text('Uang saku bulanan kompetitif, Laptop kerja MacBook'),
-          findsOneWidget,
-        );
-      },
-    );
-
-    testWidgets('durasi seleksi field validates and chip updates value', (
-      tester,
-    ) async {
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: SingleChildScrollView(
-              child: PostJobForm(onSubmitSuccess: (job) {}),
-            ),
-          ),
-        ),
-      );
-
-      expect(find.text('Durasi Seleksi'), findsOneWidget);
-      expect(
-        find.widgetWithText(TextFormField, '7 Hari Kerja'),
-        findsOneWidget,
-      );
-
-      // Scroll and tap 14 Hari Kerja chip
-      final durasiChip = find.widgetWithText(ActionChip, '14 Hari Kerja');
-      await tester.scrollUntilVisible(
-        durasiChip,
-        150,
-        scrollable: find.byType(Scrollable).first,
-      );
-      expect(durasiChip, findsOneWidget);
-      await tester.tap(durasiChip);
+      expect(repo.creates.single.title, 'Flutter Intern');
+      expect(repo.creates.single.requiredSkills, ['Flutter', 'Dart']);
+      repo.pendingCreate!.complete(jobFixture('server-id'));
       await tester.pumpAndSettle();
-
+      expect(created!.id, 'server-id');
       expect(
-        find.widgetWithText(TextFormField, '14 Hari Kerja'),
-        findsOneWidget,
+        tester
+            .widget<TextFormField>(find.byKey(const Key('title')))
+            .controller!
+            .text,
+        '',
       );
-
-      // Test empty validation
-      final durasiField = find.widgetWithText(TextFormField, '14 Hari Kerja');
-      await tester.enterText(durasiField, '');
-
-      final submitBtn = find.text('Publikasikan Lowongan');
-      await tester.ensureVisible(submitBtn);
-      await tester.tap(submitBtn);
-      await tester.pumpAndSettle();
-
-      expect(find.text('Durasi seleksi wajib diisi'), findsOneWidget);
+    },
+  );
+  testWidgets('failure preserves draft and supports retry', (tester) async {
+    final repo = FakeJobsRepository()..fail = true;
+    await mount(tester, repo);
+    await fill(tester);
+    await submit(tester);
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<TextFormField>(find.byKey(const Key('title')))
+          .controller!
+          .text,
+      ' Flutter Intern ',
+    );
+    expect(repo.creates.length, 1);
+    repo.fail = false;
+    await submit(tester);
+    await tester.pumpAndSettle();
+    expect(repo.creates.length, 2);
+    expect(find.text('Lowongan berhasil disimpan'), findsOneWidget);
+  });
+  testWidgets('creation rejects missing session', (tester) async {
+    final repo = FakeJobsRepository();
+    await mount(tester, repo, signedIn: false);
+    await fill(tester);
+    await submit(tester);
+    await tester.pumpAndSettle();
+    expect(repo.creates, isEmpty);
+  });
+  testWidgets('320px layout stays within bounds', (tester) async {
+    tester.view.physicalSize = const Size(320, 600);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
     });
+    await mount(tester, FakeJobsRepository());
+    await fill(tester);
+    expect(tester.takeException(), isNull);
   });
 }
