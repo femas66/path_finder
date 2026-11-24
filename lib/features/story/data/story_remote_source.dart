@@ -10,8 +10,6 @@ class StoryRemoteSource {
 
   final Dio _dio;
 
-  /// Menyusun path endpoint dengan tetap mendukung `baseUrl` yang sudah
-  /// menyertakan prefix `/api` maupun yang belum.
   String get _storiesPath {
     final baseUrl = _dio.options.baseUrl.replaceAll(RegExp(r'/+$'), '');
     if (baseUrl.endsWith('/api')) {
@@ -20,6 +18,7 @@ class StoryRemoteSource {
     return '/api/stories';
   }
 
+  /// Mengirim cerita reflektif baru (POST /api/stories)
   Future<StoryResponse> submitStory(CreateStoryRequest request) async {
     try {
       final response = await _dio.post(
@@ -51,13 +50,59 @@ class StoryRemoteSource {
     }
   }
 
-  /// Response Dio bisa berupa `Map` atau `String` JSON mentah tergantung
-  /// `responseType` dan konfigurasi interceptor.
+  /// Mengambil cerita aktif terakhir mahasiswa (GET /api/stories/me)
+  Future<StoryResponse?> getLatestStory() async {
+    try {
+      final response = await _dio.get('$_storiesPath/me');
+      final storyResponse = StoryResponse.fromJson(_asMap(response.data));
+      if (!storyResponse.success || storyResponse.data == null) {
+        return null;
+      }
+      return storyResponse;
+    } on DioException catch (dioError) {
+      if (dioError.response?.statusCode == 404) {
+        return null;
+      }
+      throw ErrorMapper.fromDioException(dioError);
+    } catch (e, stackTrace) {
+      if (e is AppException) rethrow;
+      throw ErrorMapper.fromObject(e, stackTrace);
+    }
+  }
+
+  /// Memperbarui cerita yang sudah ada (PUT /api/stories/:id)
+  Future<StoryResponse> updateStory(String id, String content) async {
+    try {
+      final response = await _dio.put(
+        '$_storiesPath/$id',
+        data: {'content': content},
+      );
+
+      final storyResponse = StoryResponse.fromJson(_asMap(response.data));
+
+      if (!storyResponse.success) {
+        throw ValidationException(
+          message: storyResponse.message ?? 'Cerita gagal diperbarui.',
+          statusCode: response.statusCode ?? 422,
+        );
+      }
+
+      return storyResponse;
+    } on DioException catch (dioError) {
+      throw ErrorMapper.fromDioException(dioError);
+    } catch (e, stackTrace) {
+      if (e is AppException) rethrow;
+      throw ErrorMapper.fromObject(e, stackTrace);
+    }
+  }
+
   Map<String, dynamic> _asMap(dynamic rawData) {
     if (rawData is Map<String, dynamic>) return rawData;
+    if (rawData is Map) return Map<String, dynamic>.from(rawData);
     if (rawData is String && rawData.trim().isNotEmpty) {
       final decoded = jsonDecode(rawData);
       if (decoded is Map<String, dynamic>) return decoded;
+      if (decoded is Map) return Map<String, dynamic>.from(decoded);
     }
     return <String, dynamic>{};
   }

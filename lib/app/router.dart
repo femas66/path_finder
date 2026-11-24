@@ -1,5 +1,6 @@
 import 'package:go_router/go_router.dart';
 
+import '../features/admin/presentation/pages/admin_dashboard_page.dart';
 import '../features/auth/presentation/pages/forgot_password_page.dart';
 import '../features/auth/presentation/pages/login_page.dart';
 import '../features/auth/presentation/pages/register_page.dart';
@@ -21,6 +22,7 @@ abstract class AppRoutePaths {
   static const String forgotPassword = '/forgot-password';
   static const String dashboard = '/dashboard';
   static const String companyDashboard = '/company-dashboard';
+  static const String adminDashboard = '/admin-dashboard';
   static const String jobDetail = '/job-detail';
   static const String story = '/story';
   static const String recommendation = '/recommendation';
@@ -57,6 +59,10 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: AppRoutePaths.companyDashboard,
       builder: (context, state) => const CompanyDashboardPage(),
+    ),
+    GoRoute(
+      path: AppRoutePaths.adminDashboard,
+      builder: (context, state) => const AdminDashboardPage(),
     ),
     GoRoute(
       path: AppRoutePaths.jobDetail,

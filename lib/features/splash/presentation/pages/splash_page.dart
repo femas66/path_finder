@@ -82,7 +82,10 @@ class _SplashPageState extends State<SplashPage>
       final user = await repository.validateCurrentSession();
 
       if (user != null && mounted) {
-        if (user.isMitra) {
+        if (user.isAdmin) {
+          context.go(AppRoutePaths.adminDashboard);
+          return;
+        } else if (user.isMitra) {
           context.go(AppRoutePaths.companyDashboard);
           return;
         } else {

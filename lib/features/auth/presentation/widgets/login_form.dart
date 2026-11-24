@@ -151,7 +151,9 @@ class _LoginFormState extends ConsumerState<LoginForm> {
       if (widget.onLoginSuccess != null) {
         widget.onLoginSuccess!();
       } else {
-        if (session != null && session.user.isMitra) {
+        if (session != null && session.user.isAdmin) {
+          context.go(AppRoutePaths.adminDashboard);
+        } else if (session != null && session.user.isMitra) {
           context.go(AppRoutePaths.companyDashboard);
         } else {
           context.go(AppRoutePaths.dashboard);

@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'package:path_finder/app/router.dart';
+import 'package:path_finder/features/auth/presentation/providers/auth_providers.dart';
 
 import '../../../data/company_mock_data.dart';
 import '../../../domain/models/company_profile.dart';
 import '../forms/edit_company_profile_sheet.dart';
 
-class CompanyProfileTab extends StatelessWidget {
+class CompanyProfileTab extends ConsumerWidget {
   const CompanyProfileTab({super.key, this.profile, this.onProfileUpdated});
 
   final CompanyProfile? profile;
@@ -35,7 +37,7 @@ class CompanyProfileTab extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final data = _effectiveProfile;
 
     return Scaffold(
@@ -225,7 +227,12 @@ class CompanyProfileTab extends StatelessWidget {
 
           // Logout Button
           OutlinedButton.icon(
-            onPressed: () => context.go(AppRoutePaths.login),
+            onPressed: () async {
+              await ref.read(authLocalSourceProvider).clearSession();
+              if (context.mounted) {
+                context.go(AppRoutePaths.login);
+              }
+            },
             icon: const Icon(
               Icons.logout_rounded,
               color: Color(0xFFDC2626),
