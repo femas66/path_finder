@@ -1,4 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path_finder/features/auth/presentation/providers/auth_controller.dart';
+import 'package:path_finder/features/company/presentation/providers/applicants_provider.dart';
+
+import 'candidates_tab_test.dart' show MitraAuth, FakeRepository;
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path_finder/app/router.dart';
 import 'package:path_finder/features/company/presentation/pages/company_dashboard_page.dart';
@@ -6,7 +12,15 @@ import 'package:path_finder/features/company/presentation/pages/company_dashboar
 void main() {
   group('CompanyDashboardPage', () {
     testWidgets('switches between all 4 tabs seamlessly', (tester) async {
-      await tester.pumpWidget(const MaterialApp(home: CompanyDashboardPage()));
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            authControllerProvider.overrideWith(MitraAuth.new),
+            applicantsRepositoryProvider.overrideWithValue(FakeRepository()),
+          ],
+          child: MaterialApp(home: CompanyDashboardPage()),
+        ),
+      );
 
       // Tab 0: Ringkasan
       expect(find.text('Lowongan Magang Anda'), findsOneWidget);
@@ -24,7 +38,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Semua'), findsOneWidget);
-      expect(find.text('Aditya Pratama'), findsOneWidget);
+      expect(find.text('Belum ada pelamar untuk filter ini.'), findsOneWidget);
 
       // Switch to Tab 3: Profil
       await tester.tap(find.text('Profil'));
@@ -45,7 +59,15 @@ void main() {
       (tester) async {
         expect(AppRoutePaths.companyDashboard, '/company-dashboard');
 
-        await tester.pumpWidget(MaterialApp.router(routerConfig: appRouter));
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              authControllerProvider.overrideWith(MitraAuth.new),
+              applicantsRepositoryProvider.overrideWithValue(FakeRepository()),
+            ],
+            child: MaterialApp.router(routerConfig: appRouter),
+          ),
+        );
 
         appRouter.go(AppRoutePaths.companyDashboard);
         await tester.pumpAndSettle();
@@ -59,7 +81,13 @@ void main() {
       tester,
     ) async {
       await tester.pumpWidget(
-        const MaterialApp(home: CompanyDashboardPage(initialIndex: 3)),
+        ProviderScope(
+          overrides: [
+            authControllerProvider.overrideWith(MitraAuth.new),
+            applicantsRepositoryProvider.overrideWithValue(FakeRepository()),
+          ],
+          child: MaterialApp(home: CompanyDashboardPage(initialIndex: 3)),
+        ),
       );
 
       await tester.tap(find.byKey(const Key('edit_company_profile_button')));

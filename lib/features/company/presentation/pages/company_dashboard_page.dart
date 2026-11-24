@@ -69,25 +69,6 @@ class _CompanyDashboardPageState extends State<CompanyDashboardPage> {
     );
   }
 
-  void _handleUpdateStatus(String candidateId, String newStatus) {
-    setState(() {
-      final index = _candidates.indexWhere((c) => c.id == candidateId);
-      if (index != -1) {
-        _candidates[index] = _candidates[index].copyWith(status: newStatus);
-      }
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Status pelamar berhasil diperbarui menjadi "$newStatus"',
-        ),
-        duration: const Duration(seconds: 1),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -103,10 +84,7 @@ class _CompanyDashboardPageState extends State<CompanyDashboardPage> {
             onNavigateToCandidates: () => _onTabSelected(2),
           ),
           PostJobTab(onJobCreated: _handleJobCreated),
-          CandidatesTab(
-            candidates: _candidates,
-            onUpdateStatus: _handleUpdateStatus,
-          ),
+          const CandidatesTab(),
           CompanyProfileTab(
             profile: _companyProfile,
             onProfileUpdated: _handleProfileUpdated,

@@ -10,6 +10,8 @@ class CandidateApplication {
     required this.matchScore,
     required this.status,
     this.notes = '',
+    this.cvUrl,
+    this.email = '',
   });
 
   final String id;
@@ -22,6 +24,9 @@ class CandidateApplication {
   final int matchScore;
   final String status;
   final String notes;
+  final String? cvUrl;
+  final String email;
+  bool get canDecide => status == 'pending';
 
   CandidateApplication copyWith({
     String? id,
@@ -34,6 +39,7 @@ class CandidateApplication {
     int? matchScore,
     String? status,
     String? notes,
+    String? cvUrl,
   }) {
     return CandidateApplication(
       id: id ?? this.id,
@@ -46,6 +52,8 @@ class CandidateApplication {
       matchScore: matchScore ?? this.matchScore,
       status: status ?? this.status,
       notes: notes ?? this.notes,
+      cvUrl: cvUrl ?? this.cvUrl,
+      email: email,
     );
   }
 }
