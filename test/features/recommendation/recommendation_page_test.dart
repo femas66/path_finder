@@ -52,7 +52,7 @@ Recommendation _sampleRecommendation() {
       RecommendationItem(
         jobId: 'JOB-009',
         title: 'Backend Developer Intern',
-        category: 'Backend Developer Intern',
+        category: 'Backend',
         company: 'PT Qtera Mandiri',
         location: 'Jakarta Utara',
         workType: 'WFO',
@@ -66,7 +66,7 @@ Recommendation _sampleRecommendation() {
       RecommendationItem(
         jobId: 'JOB-015',
         title: 'Frontend Developer Intern',
-        category: 'Frontend Developer Intern',
+        category: 'Frontend',
         company: 'PT Telkom Indonesia',
         location: 'Bandung',
         workType: 'Hybrid',
@@ -102,9 +102,23 @@ void main() {
       expect(find.text('Backend Developer Intern'), findsOneWidget);
       expect(find.text('Frontend Developer Intern'), findsOneWidget);
 
-      // Skor kecocokan tampil apa adanya.
-      expect(find.text('90'), findsOneWidget);
-      expect(find.text('45'), findsOneWidget);
+      // Katalog beserta ringkasan jumlah lowongan.
+      expect(find.text('Katalog Rekomendasi'), findsOneWidget);
+      expect(find.text('2 lowongan'), findsOneWidget);
+      expect(
+        find.text('Diurutkan dari kecocokan tertinggi — teratas 90%.'),
+        findsOneWidget,
+      );
+
+      // Badge persentase kecocokan, divisi, perusahaan, dan lokasi.
+      expect(find.text('90%'), findsOneWidget);
+      expect(find.text('45%'), findsOneWidget);
+      expect(find.text('Backend'), findsOneWidget);
+      expect(find.text('Frontend'), findsOneWidget);
+      expect(find.text('PT Qtera Mandiri'), findsOneWidget);
+      expect(find.text('PT Telkom Indonesia'), findsOneWidget);
+      expect(find.text('Jakarta Utara • WFO'), findsOneWidget);
+      expect(find.text('Bandung • Hybrid'), findsOneWidget);
 
       // Keahlian yang sudah cocok dan yang perlu dipelajari.
       // "Go" muncul dua kali: pada ringkasan profil dan pada kartu lowongan.

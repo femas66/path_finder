@@ -9,9 +9,9 @@ import '../../../../core/widgets/error_view.dart';
 import '../../domain/entities/recommendation.dart';
 import '../providers/recommendation_controller.dart';
 import '../widgets/ml_processing_view.dart';
+import '../widgets/recommendation_card.dart';
 
 const Color _primary = Color(0xFF2373F4);
-const Color _success = Color(0xFF10B981);
 const Color _warning = Color(0xFFF59E0B);
 const Color _textDark = Color(0xFF0F172A);
 const Color _textMuted = Color(0xFF64748B);
@@ -164,13 +164,19 @@ class _RecommendationPageState extends ConsumerState<RecommendationPage> {
             _EmptyRecommendation(
               onStart: () => context.go(AppRoutePaths.story),
             )
-          else
+          else ...[
+            _CatalogHeader(
+              count: recommendation.items.length,
+              topScore: _topScore(recommendation),
+            ),
+            const SizedBox(height: 12),
             ...recommendation.items.map(
               (item) => Padding(
                 padding: const EdgeInsets.only(bottom: 14),
-                child: _RecommendationCard(item: item),
+                child: RecommendationCard(item: item),
               ),
             ),
+          ],
           if (recommendation.items.isNotEmpty) ...[
             const SizedBox(height: 4),
             Text(
@@ -194,6 +200,68 @@ class _RecommendationPageState extends ConsumerState<RecommendationPage> {
         ValidationException() => Icons.edit_note_rounded,
         _ => Icons.error_outline_rounded,
       };
+
+  /// Skor kecocokan tertinggi pada daftar, `null` bila belum ada yang dihitung.
+  int? _topScore(Recommendation recommendation) {
+    final scores = recommendation.items
+        .map((item) => item.matchingScore)
+        .whereType<int>()
+        .toList(growable: false);
+    if (scores.isEmpty) return null;
+    return scores.reduce((left, right) => left > right ? left : right);
+  }
+}
+
+/// Judul katalog beserta ringkasan jumlah lowongan dan kecocokan tertinggi.
+class _CatalogHeader extends StatelessWidget {
+  const _CatalogHeader({required this.count, this.topScore});
+
+  final int count;
+  final int? topScore;
+
+  @override
+  Widget build(BuildContext context) {
+    final score = topScore;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                'Katalog Rekomendasi',
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: _textDark,
+                ),
+              ),
+            ),
+            Text(
+              '$count lowongan',
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: _textMuted,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          score == null
+              ? 'Diurutkan dari kecocokan tertinggi dengan ceritamu.'
+              : 'Diurutkan dari kecocokan tertinggi — teratas $score%.',
+          style: const TextStyle(
+            fontSize: 12,
+            height: 1.4,
+            color: _textMuted,
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 class _ProfileSummary extends StatelessWidget {
@@ -366,214 +434,16 @@ class _EmptyRecommendation extends StatelessWidget {
   }
 }
 
-class _RecommendationCard extends StatelessWidget {
-  const _RecommendationCard({required this.item});
-
-  final RecommendationItem item;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: _surface,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: _border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        if (item.rank != null) ...[
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 3,
-                            ),
-                            decoration: BoxDecoration(
-                              color: _primary.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              '#${item.rank}',
-                              style: const TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color: _primary,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                        ],
-                        Expanded(
-                          child: Text(
-                            item.title,
-                            style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                              height: 1.3,
-                              color: _textDark,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      [
-                        if (item.company.isNotEmpty) item.company,
-                        if (item.location.isNotEmpty) item.location,
-                        if (item.workType.isNotEmpty) item.workType,
-                      ].join(' • '),
-                      style: const TextStyle(
-                        fontSize: 12.5,
-                        height: 1.4,
-                        color: _textMuted,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 12),
-              _ScoreBadge(score: item.matchingScore),
-            ],
-          ),
-          if (item.matchedSkills.isNotEmpty) ...[
-            const SizedBox(height: 14),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: item.matchedSkills
-                  .map(
-                    (skill) => _Chip(
-                      label: skill,
-                      background: _success.withValues(alpha: 0.1),
-                      foreground: _success,
-                      icon: Icons.check_rounded,
-                    ),
-                  )
-                  .toList(growable: false),
-            ),
-          ],
-          if (item.missingSkills.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            Text(
-              'Perlu dipelajari',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 0.2,
-                color: _textMuted,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: item.missingSkills
-                  .map(
-                    (skill) => _Chip(
-                      label: skill,
-                      background: const Color(0xFFF1F5F9),
-                      foreground: _textMuted,
-                    ),
-                  )
-                  .toList(growable: false),
-            ),
-          ],
-          if (item.readinessScore != null) ...[
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                const Icon(Icons.trending_up_rounded,
-                    size: 15, color: _textMuted),
-                const SizedBox(width: 6),
-                Text(
-                  'Kesiapan kerja ${item.readinessScore}%',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: _textMuted,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _ScoreBadge extends StatelessWidget {
-  const _ScoreBadge({this.score});
-
-  final int? score;
-
-  @override
-  Widget build(BuildContext context) {
-    final value = score;
-    final color = value == null
-        ? _textMuted
-        : value >= 70
-            ? _success
-            : value >= 40
-                ? _primary
-                : _warning;
-
-    return Container(
-      width: 58,
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withValues(alpha: 0.25)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            value == null ? '—' : '$value',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-              color: color,
-            ),
-          ),
-          Text(
-            'cocok',
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w600,
-              color: color.withValues(alpha: 0.85),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _Chip extends StatelessWidget {
   const _Chip({
     required this.label,
     required this.background,
     required this.foreground,
-    this.icon,
   });
 
   final String label;
   final Color background;
   final Color foreground;
-  final IconData? icon;
 
   @override
   Widget build(BuildContext context) {
@@ -583,22 +453,13 @@ class _Chip extends StatelessWidget {
         color: background,
         borderRadius: BorderRadius.circular(8),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (icon != null) ...[
-            Icon(icon, size: 12, color: foreground),
-            const SizedBox(width: 4),
-          ],
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 11.5,
-              fontWeight: FontWeight.w600,
-              color: foreground,
-            ),
-          ),
-        ],
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 11.5,
+          fontWeight: FontWeight.w600,
+          color: foreground,
+        ),
       ),
     );
   }
